@@ -25,6 +25,13 @@
 # OTHER DEALINGS IN THE SOFTWARE
 #
 #-----------------------------------------------------------------------------
+# Version: 1.2.4 - 12 April 2012
+# - API version of XML response now available as _meta.version
+# - 
+
+# Version: 1.2.3 - 10 April 2012
+# - fix for tags of the form <tag attr=bla ... />
+#
 # Version: 1.2.2 - 27 February 2012
 # - fix for the workaround in 1.2.1.
 #
@@ -355,7 +362,7 @@ class _RootContext(_Context):
 			# implementor is handling fallbacks...
 			try:
 				return _ParseXML(response, True, store and (lambda obj: cache.store(self._host, path, kw, response, obj)))
-			except Error, reason:
+			except Error, e:
 				response = retrieve_fallback(self._host, path, kw, reason=e)
 				if response is not None:
 					return response
@@ -466,6 +473,10 @@ class _Parser(object):
 			# We're at the root. The first tag has to be "eveapi" or we can't
 			# really assume the rest of the xml is going to be what we expect.
 			if name != "eveapi":
+				raise RuntimeError("Invalid API response")
+			try:
+				this.version = attributes[attributes.index("version")+1]
+			except KeyError:
 				raise RuntimeError("Invalid API response")
 			self.root = this
 
@@ -580,9 +591,17 @@ class _Parser(object):
 			# really happen, but it doesn't hurt to handle this case!
 			sibling = getattr(self.container, this._name, None)
 			if sibling is None:
-				if (not self.has_cdata) and self._last is this:
-					# tag of the form: <tag />, treat as empty string.
-					setattr(self.container, this._name, "")
+				if (not self.has_cdata) and (self._last is this) and (name != "rowset"):
+					if attributes:
+						# tag of the form <tag attribute=bla ... />
+						e = Element()
+						e._name = this._name
+						setattr(self.container, this._name, e)
+						for i in xrange(0, len(attributes), 2):
+							setattr(e, attributes[i], attributes[i+1])
+					else:
+						# tag of the form: <tag />, treat as empty string.
+						setattr(self.container, this._name, "")
 				else:
 					self.container._attributes2.append(this._name)
 					setattr(self.container, this._name, this)
