@@ -1,0 +1,68 @@
+{% extends 'core/nav.html' %}
+{% load render_table from django_tables2 %}
+{% block js %}
+{{ block.super }}
+{% endblock %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>EVE Item Database</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span4">
+            <h3>Search</h3>
+        </div>
+        <div class="span8">
+            <h3>Filters</h3>
+        </div>
+    </div>
+    <div class="row">
+        <form class="form-search" method="post">
+            <div class="span4">
+                {% csrf_token %}
+                <input class="search-query" name="search-terms" id="item-name-search" type="text" data-provide="typeahead" placeholder="Item name" 
+                {% if search_terms %}
+                value="{{ search_terms }}" 
+                {% endif %}
+                />
+                <button type="submit" class="btn">Search</button>
+            </div>
+        </form>
+        <form class="form form-vertical" method="post">
+            <div class="span4">
+                <strong>Market group</strong>
+                <a href="#" class="btn btn-medium" data-toggle="collapse" data-target="#marketgroup_filters">Add</a>
+                <div id="marketgroup_filters" class="collapse">
+                    {% for group in market_groups %}
+                    <label class="checkbox"><input type="checkbox" checked="yes" value="{{ group.pk }}" name="marketgroups" />{{ group.marketgroupname }}</label>
+                    {% endfor %}
+                </div>
+                <strong>Meta level</strong>
+                <a href="#" class="btn btn-medium" data-toggle="collapse" data-target="#metalevel_filters">Add</a>
+                <div id="metalevel_filters" class="collapse">
+                    {% for group in meta_groups %}
+                    <label class="checkbox"><input type="checkbox" checked="yes" value="{{ group.pk }}" name="metalevel" />{{ group.metagroupname }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="span4">
+                moar filters
+            </div>
+            <button type="submit" class="btn pull-right">Filter</button>
+        </form>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <div id="loader"></div>
+            {% render_table item_table %}
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    init_eve_items();
+    init_price_columns();
+</script>
+{% endblock %}

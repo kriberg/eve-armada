@@ -1,0 +1,28 @@
+{% load eve_tags %}
+{% load capsuler_tags %}
+            {% if pilots %}
+            <div class="row">
+                <h3>Your pilots</h3>
+            </div>
+            {% for pilot in pilots %}
+            <div class="row">
+                <div class="span1"><a href="/capsuler/pilots/{{ pilot.public_info.name }}">{% character_portrait pilot.public_info 128 %}</a></div>
+                <div class="span3">
+                    <ul class="unstyled">
+                        <li><a href="/capsuler/pilots/{{ pilot.public_info.name }}">{{ pilot.public_info.name }}</a></li>
+                        <li>&lt;<a href="{{ pilot.corporation.public_info.get_absolute_url }}">{{ pilot.public_info.corporation }}</a>&gt;</li>
+                        {% if pilot.public_info.allianceid %}
+                        <li>[<a href="{{ pilot.public_info.alliance.get_absolute_url }}">{{ pilot.public_info.alliance }}</a>]</li>
+                        {% endif %}
+                        <li><span class="isk">{% pilot_property pilot 'balance' %}</span></li>
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+            <script type="text/javascript">init_isk_span();</script>
+            {% else %}
+            <div class="row">
+                <h3>No pilots registered</h3>
+            </div>
+            {% endif %}
+

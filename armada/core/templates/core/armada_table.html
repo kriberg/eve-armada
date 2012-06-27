@@ -1,0 +1,97 @@
+{% spaceless %}
+{% load querystring from django_tables2 %}
+{% load trans blocktrans from i18n %}
+{% if table.page %}
+<div class="table-container">
+{% endif %}
+{% block table %}
+<table{% if table.attrs %} {{ table.attrs.as_html }}{% endif %}>
+    {% block table.thead %}
+    <thead>
+        <tr>
+        {% for column in table.columns %}
+            {% if column.orderable %}
+            <th {{ column.attrs.th.as_html }}><a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}">{{ column.header }}</a></th>
+            {% else %}
+            <th {{ column.attrs.th.as_html }}>{{ column.header }}</th>
+            {% endif %}
+        {% endfor %}
+        </tr>
+    </thead>
+    {% endblock table.thead %}
+    {% block table.tbody %}
+    <tbody>
+        {% for row in table.page.object_list|default:table.rows %} {# support pagination #}
+        {% block table.tbody.row %}
+        <tr>
+            {% for column, cell in row.items %}
+                <td {{ column.attrs.td.as_html }}>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endblock table.tbody.row %}
+        {% empty %}
+        {% if table.empty_text %}
+        {% block table.tbody.empty_text %}
+        <tr><td colspan="{{ table.columns|length }}">{{ table.empty_text }}</td></tr>
+        {% endblock table.tbody.empty_text %}
+        {% endif %}
+        {% endfor %}
+    </tbody>
+    {% endblock table.tbody %}
+    {% block table.tfoot %}
+    <tfoot></tfoot>
+    {% endblock table.tfoot %}
+</table>
+{% endblock table %}
+
+{% if table.page %}
+{% block pagination %}
+{% if table.paginator.num_pages > 15 %}
+<div class="pagination pagination-centered">
+    <ul>
+        {% block pagination.previous %}
+        {% if not table.page.has_previous %}
+        <li class="disabled"><a href="#">&larr;</a></li>
+        {% else %}
+        <li><a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">&larr;</a></li>
+        <li><a href="?page=1">1</a></li>
+        {% ifnotequal table.page.previous_page_number 1 %}
+        <li class="disabled"><a href="#">...</a></li>
+        <li><a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}">{{ table.page.previous_page_number }}</a></li>
+        {% endifnotequal %}
+        {% endif %}
+        {% endblock pagination.previous %}
+        {% block pagination.current %}
+        <li class="active"><a href="{% querystring table.prefixed_page_field=table.page.number %}">{{ table.page.number }}</a></li>
+        {% endblock pagination.current %}
+        {% block pagination.next %}
+        {% if not table.page.has_next %}
+        <li class="disabled"><a href="#">&rarr;</a></li>
+        {% else %}
+        <li><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">{{ table.page.next_page_number }}</a></li>
+        {% ifnotequal table.page.next_page_number table.paginator.num_pages  %}
+        <li class="disabled"><a href="#">...</a></li>
+        <li><a href="{% querystring table.prefixed_page_field=table.paginator.num_pages %}">{{ table.paginator.num_pages }}</a></li>
+        {% endifnotequal %}
+        <li><a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}">&rarr;</a></li>
+        {% endif %}
+        {% endblock pagination.next %}
+    </ul>
+</div>
+{% else %}
+<div class="pagination pagination-centered">
+    <ul>
+        {% for page_number in table.paginator.page_range %}
+        {% ifequal page_number table.page.number %}
+        <li class="active"><a href="{% querystring table.prefixed_page_field=table.page.number %}">{{ table.page.number }}</a></li>
+        {% else %}
+        <li><a href="{% querystring table.prefixed_page_field=page_number %}">{{ page_number }}</a></li>
+        {% endifequal %}
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock pagination %}
+</div>
+{% endif %}
+{% endspaceless %}

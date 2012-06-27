@@ -1,0 +1,65 @@
+{% load capsuler_tags %}
+{% load eve_tags %}
+{% load humanize %}
+                <div class="row">
+                    <div class="span2">
+                        {% character_portrait pilot.public_info 256 %}
+                    </div>
+                    <dl class="dl-horizontal span5">
+                        <dt>Balance</dt>
+                        <dd><span class="isk">{% pilot_property pilot 'balance' %}</span></dd>
+                        <dt>Corporation</dt>
+                        <dd><a href="{{ pilot.corporation.public_info.get_absolute_url }}">{{ pilot.corporation }}</a></dd>
+                        {% if pilot.public_info.allianceid %}
+                        <dt>Alliance</dt>
+                        <dd><a href="{{ pilot.public_info.alliance.get_absolute_url }}">{{ pilot.public_info.alliance }}</a></dd>
+                        {% endif %}
+                        <dt>Skill points</dt>
+                        <dd>{{ pilot.get_skill_points|intcomma}} SP</dd>
+                        <dt>Clone</dt>
+                        <dd>{% pilot_property pilot 'cloneName' %} ({% pilot_property pilot 'cloneSkillPoints' %} SP)</dd>
+                        <dt>Known skills</dt>
+                        <dd>{{ pilot.get_skill_count }} known skills, {{ pilot.get_skill_at_l5_count }} at level V</dd>
+                    </dl>
+                    <dl class="dl-horizontal span3">
+                        <dt>Charisma</dt>
+                        <dd>{% pilot_property pilot 'charisma' %}</dd>
+                        <dt>Intelligence</dt>
+                        <dd>{% pilot_property pilot 'intelligence' %}</dd>
+                        <dt>Perception</dt>
+                        <dd>{% pilot_property pilot 'perception' %}</dd>
+                        <dt>Memory</dt>
+                        <dd>{% pilot_property pilot 'memory' %}</dd>
+                        <dt>Willpower</dt>
+                        <dd>{% pilot_property pilot 'willpower' %}</dd>
+                    </dl>
+                </div>
+                <div id="profile_skills" class="row">
+                    <div class="" id="skills-accordion">
+                        {% for group, values in pilot.get_skills_by_group.items %}
+                        <div class="accordion-group">
+                            <div class="accordion-heading">
+                                <a class="accordion-toggle" data-toggle="collapse" href="#collapse-{{ group|slugify }}">{{ group }}</a>
+                            </div>
+                            <div id="collapse-{{ group|slugify }}" class="accordion-body collapse">
+                                <div class="accordion-inner">
+                                    <table class="table table-striped table-condensed table-bordered">
+                                        {% for skill in values %}
+                                        {% if skill.published %}
+                                        <tr>
+                                            <td>{% skill_indicator_image skill.level %}<a href="/eve/items/{{ skill.skill.typename }}">{{ skill.skill.typename }}</a> ({{ skill.get_rank }})</td>
+                                            <td>{% skill_level_image skill.level %}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endfor %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            <script type="text/javascript">
+                init_isk_span();
+            </script>

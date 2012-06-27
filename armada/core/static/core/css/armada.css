@@ -1,0 +1,30 @@
+.table td.number {
+    text-align: right;
+    font-family: monospace;
+}
+
+#item_table td.baseprice,
+#item_table td.volume {
+    text-align: right;
+    font-family: monospace;
+}
+
+body {
+    padding-top: 4em;
+}
+
+.system-item-price{
+    font-family: monospace;
+    text-align: right;
+}
+
+span.price-buy {
+    color: red;
+}
+span.price-sell {
+    color: green;
+}
+
+#profile_skills {
+    padding-top: 10px;
+}

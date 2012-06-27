@@ -1,0 +1,47 @@
+{% extends 'core/nav.html' %}
+{% load render_table from django_tables2 %}
+{% block js %}
+    {{ block.super }}
+{% endblock %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ corporation.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span2">
+            <img src="http://image.eveonline.com/Corporation/{{ corporation.pk }}_128.png" alt="{{ corporation.name }} logo" />
+            <dl>
+                <dt>Ticker</dt>
+                <dd>{{ corporation.ticker }}</dd>
+                <dt>Alliance</dt>
+                <dd>{{ corporation.alliance }}</dd>
+                <dt>CEO</dt>
+                <dd>{{ corporation.ceo }}</dd>
+                <dt>Members</dt>
+                <dd>{{ corporation.member_count }}</dd>
+                <dt>Tax rate</dt>
+                <dd>{{ corporation.tax_rate }} %</dd>
+                <dt>Status</dt>
+                <dd>{{ corporation.status }}</dd>
+                <dt>Links</dt>
+                {% if corporation.url|length > 0 %}
+                <dd><a href="{{ corporation.url }}">{{ corporation.url }}</a></dd>
+                {% endif %}
+                <dd></dd>
+                <dd><a href="http://evemaps.dotlan.net/corp/{{ corporation.get_dotlan_slug }}">dotlan</a></dd>
+                <dd><a href="http://evewho.com/corp/{{ corporation.get_evewho_slug }}">EveWho</a></dd>
+            </dl>
+        </div>
+        <div class="span4">
+            <p>
+                {{ corporation.description|evehtmlcleaner|linebreaks}}
+            </p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

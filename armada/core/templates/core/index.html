@@ -1,0 +1,46 @@
+{% extends 'core/nav.html' %}
+{% load eve_tags %}
+{% load delayed_load %}
+{% load render_table from django_tables2 %}
+{% load capsuler_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Welcome to EVE Armada</h1>
+            <em>Your one-stop shop for all your corp needs</em>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span8">
+            <blockquote>
+                <p>OMG!RI just sperged all over myself when I found EVE Armada!</p>
+                <small>Fake corp CEO</small>
+            </blockquote>
+            <blockquote>
+                <p>Oh, a buffet... too bad I didn't bring my wallet...</p>
+                <small>Zoidberg</small>
+            </blockquote>
+            {% if not request.user.is_authenticated %}
+            <a href="/accounts/register/" class="btn">Register new user</a>            
+            <a href="/accounts/login/" class="btn">Log in</a>            
+            {% endif %}
+        </div>
+        <div class="span4">
+            {% if characterdata_taskid %}
+            {% delayed_load '/core/pilotlist/' characterdata_taskid %}
+            {% endif %}
+            <div class="row">
+                <h3>Jita mineral index</h3>
+                <div class="span2">
+                    {% render_table mineral_table %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script type="text/javascript">
+    init_price_columns();
+    init_isk_span();
+</script>
+{% endblock %}

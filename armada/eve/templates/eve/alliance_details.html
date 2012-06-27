@@ -1,0 +1,43 @@
+{% extends 'core/nav.html' %}
+{% load render_table from django_tables2 %}
+{% block js %}
+    {{ block.super }}
+{% endblock %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ alliance.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span2">
+            <img src="http://image.eveonline.com/Alliance/{{ alliance.pk }}_128.png" alt="{{ alliance.name }} logo" />
+            <dl>
+                <dt>Ticker</dt>
+                <dd>{{ alliance.ticker }}</dd>
+                <dt>Pilots</dt>
+                <dd>{{ alliance.member_count }}</dd>
+                <dt>Corporations</dt>
+                <dd>{{ alliance.members.count }}</dd>
+                <dt>Formed</dt>
+                <dd>{{ alliance.start_date }}</dd>
+                <dt>Status</dt>
+                <dd>{{ alliance.status }}</dd>
+                <dt>Executor corporation</dt>
+                <dd><a href="">{{ executor_corp.name }}</a></dd>
+                <dt>Links</dt>
+                <dd><a href="http://evemaps.dotlan.net/alliance/{{ alliance.get_dotlan_slug }}">dotlan</a></dd>
+                <dd><a href="http://evewho.com/alli/{{ alliance.get_evewho_slug }}">EveWho</a></dd>
+                <dd><a href="http://eve-kill.net/?a=alliance_detail&all_external_id={{ alliance.pk }}">EVE-Kill</a></dd>
+            </dl>
+        </div>
+        <div class="span6">
+            <h2>Member corporations</h2>
+            {% render_table member_corporations_table %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

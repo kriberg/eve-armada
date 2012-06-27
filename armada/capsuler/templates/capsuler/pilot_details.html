@@ -1,0 +1,18 @@
+{% extends 'core/nav.html' %}
+{% load bootstrap %}
+{% load delayed_load %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ pilot.public_info.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            {% delayed_load characterdata_url characterdata_taskid %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

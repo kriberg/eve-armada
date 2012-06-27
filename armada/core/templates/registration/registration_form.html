@@ -1,0 +1,18 @@
+{% extends 'core/nav.html' %}
+{% load bootstrap %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>User registration</h1>
+    </div>
+    <div class="row">
+        <form class="form form-horizontal" method="post">
+            <div class="span4">
+                {% csrf_token %}
+                {{ form|bootstrap }}
+                <button class="btn pull-right" type="submit">Register</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

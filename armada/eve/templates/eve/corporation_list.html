@@ -1,0 +1,48 @@
+{% extends 'core/nav.html' %}
+{% load render_table from django_tables2 %}
+{% block js %}
+    {{ block.super }}
+{% endblock %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Corporations</h1>
+        </div>
+    </div>
+    <div class="row">
+        <h2>Lookup</h2>
+        <form class="form-search" method="POST">
+            {% csrf_token %}
+            <strong>Corporation name</strong>
+            <input type="text" class="input-medium search-query" name="search" value="{{ search_terms }}" />
+            <button type="submit" class="btn">Search</button>
+        </form>
+        {% if search_terms %}
+        <ul>
+            <dt>Exact hit:</dt>
+
+            {% if corporation %}
+            <dd><a href="{{ corporation.get_absolute_url }}">{{ corporation.name }}</a></dd>
+            {% else %}
+            <dd>None</dd>
+            {% endif %}
+
+            {% if similar_corporations %}
+            <dt>Similar hits:</dt>
+            {% for corp in similar_corporations %}
+            <dd><a href="{{ corp.get_absolute_url }}">{{ corp.name }}</a></dd>
+            {% endfor %}
+            {% endif %}
+        </ul>
+        {% endif %}
+    </div>
+    <div class="row">
+        <h2>Local corporations</h2>
+        <p>These are locally cached corporations. There are of course many more
+        corporations in EVE than shown here. Use lookup form to find yours.</p>
+        {% render_table corporation_table %}
+    </div>
+</div>
+{% endblock %}

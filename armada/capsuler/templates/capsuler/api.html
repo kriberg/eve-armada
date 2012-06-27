@@ -1,0 +1,21 @@
+{% extends 'core/nav.html' %}
+{% load bootstrap %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>API Keys</h1>
+        </div>
+    </div>
+    <div class="row">
+        <form class="form form-horizontal span6" method="post">
+            {% csrf_token %}
+            {{ apiformset.management_form }}
+            {% for form in apiformset %}
+                {{ form|bootstrap }}
+            {% endfor %}
+            <button type="submit" class="btn pull-right">Save</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

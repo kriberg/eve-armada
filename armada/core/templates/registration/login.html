@@ -1,0 +1,22 @@
+{% extends 'core/nav.html' %}
+{% load bootstrap %}
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>Login</h1>
+    </div>
+    <div class="row">
+        <div class="span4">
+            {% if form.errors %}
+            <p>Your username and password didn't match. Please try again.</p>
+            {% endif %}
+            <form class="form form-horizontal" method="post">
+                {% csrf_token %}
+                {{ form|bootstrap }}
+                <button type="submit" class="btn pull-right">Login</button>
+                <input type="hidden" name="next" value="/" />
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

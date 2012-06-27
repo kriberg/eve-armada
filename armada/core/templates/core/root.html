@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{% block title %}{% endblock %}</title>
+        <meta charset="UTF-8" />
+
+        <link rel="stylesheet" href="/static/core/css/bootstrap/bootstrap.css" type="text/css" media="screen" />
+        <!--        <link rel="stylesheet" href="/static/core/css/glow.css" type="text/css" media="screen" /> -->
+        <link rel="stylesheet" href="/static/core/css/armada.css" type="text/css" media="screen" />
+        {% block css %}{% endblock %}
+
+        <script src="/static/core/js/jquery-1.7.1/jquery-1.7.1.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/static/core/js/bootstrap/bootstrap.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/static/core/js/armada.js"  type="text/javascript" charset="utf-8"></script>
+        {% block js %}{% endblock %}
+    </head>
+    <body>
+        {% block nav %}{% endblock %}
+        {% block content %}{% endblock %}
+    </body>
+</html>

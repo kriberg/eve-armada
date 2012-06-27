@@ -1,0 +1,18 @@
+{% extends 'core/nav.html' %}
+{% load render_table from django_tables2 %}
+{% block js %}
+    {{ block.super }}
+{% endblock %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Alliances</h1>
+        </div>
+    </div>
+    <div class="row">
+        {% render_table alliance_table %}
+    </div>
+</div>
+{% endblock %}

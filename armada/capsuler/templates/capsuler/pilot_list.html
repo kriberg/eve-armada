@@ -1,0 +1,41 @@
+{% extends 'core/nav.html' %}
+{% load bootstrap %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Pilots</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span4">
+            <p>                
+                This is a list of pilots retrieved by your registered API keys.
+                To use a pilot with EVE Armada, you have to activate them.
+            </p>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Name</th><th>Activated</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pilot in activated %}
+                    <tr>
+                        <td>{{ pilot.public_info.name }}</td>
+                        <td><a href="/capsuler/pilots/deactivate/{{ pilot.id }}" class="btn">Deactivate</a></td>
+                    </tr>
+                    {% endfor %}
+                    {% for pilot in unactivated %}
+                    <tr>
+                        <td>{{ pilot.name }}</td>
+                        <td><a href="/capsuler/pilots/activate/{{ pilot.id }}" class="btn">Activate</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
