@@ -13,6 +13,7 @@
                                 {% for pilot in request.user.get_profile.get_active_pilots  %}
                                 <li class="nav-header">{{ pilot }}</li>
                                 <li><a href="/capsuler/pilots/{{ pilot }}">Character sheet</a></li>
+                                <li><a href="/capsuler/assets/{{ pilot }}">Assets</a></li>
                                 {% if not forloop.last %}
                                 <li class="divider"></li>
                                 {% endif %}

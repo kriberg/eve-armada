@@ -13,6 +13,7 @@ from eve.ccpmodels import InvType, \
         CrtCertificate, \
         DgmTypeattribute
 from lib.api import private
+from lib.evemodels import get_location_name
 
 
 class Capsuler(models.Model):
@@ -25,7 +26,7 @@ class Capsuler(models.Model):
     def get_active_pilots(self):
         return UserPilot.objects.filter(user=self,
                 apikey__in=self.get_api_keys(),
-                activated=True)
+                activated=True).order_by('public_info__name')
     def fetch_character_names(self):
         characters = []
         for apikey in self.get_api_keys():
@@ -297,14 +298,51 @@ class UserPilotAugmentorManager(models.Manager):
         augmentor.value = value
         augmentor.save()
 
-
-
 class UserPilotAugmentor(models.Model):
     pilot = models.ForeignKey(UserPilot)
     bonustype = models.CharField(max_length=50)
     augmentor = models.ForeignKey(InvType)
     value = models.IntegerField()
     objects = UserPilotAugmentorManager()
+
+class AssetManager(models.Manager):
+    def update_from_api(self, assets, pilot):
+        itemid_list = [a.itemID for a in assets]
+        deleted_items = self.filter(owner=pilot).exclude(pk__in=itemid_list)
+        deleted_items.delete()
+        for a in assets:
+            try:
+                aobj = self.get(pk=a.itemID, owner=pilot)
+            except Asset.DoesNotExist:
+                aobj = Asset(id=a.itemID, owner=pilot)
+            aobj.locationid = a.locationID
+            aobj.quantity = a.quantity
+            aobj.flag = a.flag
+            aobj.singleton = a.singleton
+            try:
+                aobj.itemtype = InvType.objects.get(pk=a.typeID)
+            except:
+                continue
+            aobj.save()
+
+
+    def delete_pilot_assets(self, pilot):
+        self.filter(owner=pilot).delete()
+
+class Asset(models.Model):
+    id = models.BigIntegerField(primary_key=True)
+    itemtype = models.ForeignKey(InvType)
+    locationid = models.BigIntegerField(null=True)
+    quantity = models.IntegerField()
+    flag = models.IntegerField()
+    singleton = models.BooleanField()
+    owner = models.ForeignKey(UserPilot)
+
+    objects = AssetManager()
+
+    @property
+    def location(self):
+        return get_location_name(self.locationid)
 
 
 
@@ -320,3 +358,4 @@ admin.site.register(Capsuler)
 admin.site.register(UserPilot)
 admin.site.register(UserPilotProperty)
 admin.site.register(UserPilotSkill)
+admin.site.register(Asset)

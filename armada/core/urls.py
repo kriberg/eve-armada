@@ -6,7 +6,8 @@ from core.views import PriceView, \
 
 
 urlpatterns = patterns('',
-        url(r'^pilotlist/(?P<taskid>.+)/$', login_required(ArmadaView.PilotListView.as_view())),
         url(r'^data/prices/$', PriceView.as_view()),
         url(r'^data/prices/(?P<systemid>\d+)/$', SystemPriceView.as_view()),
         )
+
+urlpatterns.extend(ArmadaView().viewlet_urls())

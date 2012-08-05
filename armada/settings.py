@@ -136,6 +136,7 @@ INSTALLED_APPS = (
     'guardian',
     'djcelery',
 #   'debug_toolbar',
+    'tasks',
     'core',
     'eve',
     'capsuler',

@@ -74,7 +74,6 @@ var init_price_columns = function () {
             ismap[system] = [];
         ismap[system].push(item);
     });
-    skrot = [];
     for(var system in ismap) {
         (function(system) {
         $.post('/core/data/prices/'+system+'/',
@@ -100,7 +99,7 @@ var init_isk_span = function () {
 
 var delayed_load = function (field, url, taskid) {
     var id = '#' + field;
-    $.get(url+taskid+'/', function(data) {
+    $.get(url, function(data) {
         $(id).replaceWith(data);
         $(id).hide();
         $(id).fadeIn('slow');

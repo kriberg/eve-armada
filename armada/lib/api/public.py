@@ -18,6 +18,9 @@ def get_names_to_ids(names):
         name_map[row.name] = row.characterID
     return name_map
 
+def get_conquerable_station_list():
+    return get_list('eve', 'ConquerableStationList')
+
 
 if __name__ == '__main__':
     l = get_alliance_list()

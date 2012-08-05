@@ -11,7 +11,7 @@ urlpatterns = patterns('',
     url(r'^core/', include('armada.core.urls')),
     url(r'^eve/', include('armada.eve.urls')),
     url(r'^capsuler/', include('armada.capsuler.urls')),
-
+    #url(r'^tasks/', include('armada.tasks.urls')),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )

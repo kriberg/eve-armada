@@ -18,7 +18,7 @@ def invtype_render(item, size):
 
 @register.simple_tag()
 def system_item_price(systemid, item):
-    return '<span name="%d:%d" class="system-item-price"><img src="/static/core/img/spinner.gif" alt="spinner" /></span>' % (systemid, item.pk)
+    return '<span name="%d:%d" class="system-item-price"><img style="text-align: center;" src="/static/core/img/spinner.gif" alt="spinner" /></span>' % (systemid, item.pk)
 
 @register.filter
 def evehtmlcleaner(value):

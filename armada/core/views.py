@@ -10,7 +10,6 @@ from django_tables2.utils import A
 
 from lib.views import JSONView
 from lib.columns import SystemItemPriceColumn
-from core.templatetags.delayed_load import *
 from core.models import *
 from capsuler.models import UserPilot
 from eve.ccpmodels import MapSolarsystem, \
@@ -18,50 +17,48 @@ from eve.ccpmodels import MapSolarsystem, \
         InvType
 from evecentral import EveCentral
 from celery.execute import send_task
-from capsuler.tasks import *
+from tasks.tasks import *
+from tasks.views import *
 
-class ArmadaView(TemplateResponseMixin, View):
+class MineralTable(tables.Table):
+    typename = tables.LinkColumn('item_details', args=[A('typename')], verbose_name='Item')
+    jitaprice = SystemItemPriceColumn(verbose_name='price')
+    class Meta:
+        attrs = {'class': 'table table-condensed table-bordered table-striped'}
+        orderable = False
+        template = 'core/armada_table.html'
+class ArmadaView(TaskViewletsView):
     template_name = 'core/index.html'
-    class MineralTable(tables.Table):
-        typename = tables.LinkColumn('item_details', args=[A('typename')], verbose_name='Item')
-        jitaprice = SystemItemPriceColumn(verbose_name='price')
-        class Meta:
-            attrs = {'class': 'table table-condensed table-bordered table-striped'}
-            orderable = False
-            template = 'core/armada_table.html'
-    class PilotListView(TemplateResponseMixin, View):
-        template_name = 'core/index_pilot_list.html'
-        def get(self, request, taskid):
-            if request.user.is_authenticated():
-                result = request.session.get(taskid)
-                if result:
-                    result.wait(timeout=60)
-                    capsuler = request.user.get_profile()
-                    pilots = UserPilot.objects.filter(user=capsuler, activated=True)
-                else:
-                    pilots = None
-            else:
-                pilots = None
-            return self.render_to_response({
-                'pilots': pilots,
-            })
+
+    def viewlets(self):
+        pilot_list = Viewlet()
+        pilot_list.hook('core/index_pilot_list.html',
+                'tasks.fetch_character_sheet',
+                '/core/tasks/pilotlist/',
+                r'^tasks/pilotlist/(?P<taskid>.+)/$',
+                login_required=True)
+        self.add_viewlet('pilot_list', pilot_list)
+
     def get(self, request):
         minerals = InvType.objects.filter(group=InvMarketgroup.objects.get(marketgroupname='Minerals')).order_by('pk').exclude(typename='Chalcopyrite')
-        mineral_table = self.MineralTable(minerals)
+        mineral_table = MineralTable(minerals)
         if request.user.is_authenticated():
             capsuler = request.user.get_profile()
-            if UserPilot.objects.filter(user=capsuler, activated=True).count() > 0:
-                result = send_task('capsuler.fetch_character_data', (capsuler.pk,), expires=60)
-                taskid = result.task_id
-                request.session[taskid] = result
+            pilots = UserPilot.objects.filter(user=capsuler, activated=True)
+            if pilots.count() > 0:
+                pilots_task = self.get_viewlet('pilot_list').enqueue(request,
+                        {'pilots': pilots},
+                        (capsuler.pk,),
+                        expires=60)
             else:
-                taskid = None
+                pilots_task = None
         else:
-            taskid = None
-        print taskid
+            pilots_task = None
+
+
         return self.render_to_response({
             'mineral_table': mineral_table,
-            'characterdata_taskid': taskid,
+            'pilots_task': pilots_task,
             })
 
 
@@ -70,7 +67,6 @@ class PriceView(TemplateResponseMixin, JSONView):
     read_only = True
     template_name = 'core/json.html'
     def get_parameters(self, request):
-        print request.POST
         if request.method == 'POST':
             items = request.POST.getlist('items[]')
             systems = request.POST.getlist('systems[]')

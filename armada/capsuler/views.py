@@ -8,8 +8,17 @@ from guardian.shortcuts import assign
 from celery.execute import send_task
 from datetime import datetime
 import json
+import django_tables2 as tables
+from django_tables2.utils import A
+
+from lib.columns import SystemItemPriceColumn, \
+        LocationColumn, \
+        ItemColumn
 
 from capsuler.models import *
+from tasks.dispatcher import *
+from tasks.views import *
+
 
 class APIView(TemplateResponseMixin, View):
     template_name = 'capsuler/api.html'
@@ -92,32 +101,65 @@ class PilotDeactivateView(View):
 
         return HttpResponseRedirect('/capsuler/pilots/')
 
-class PilotDetailsView(TemplateResponseMixin, View):
+class PilotDetailsView(TaskViewletsView):
     template_name = 'capsuler/pilot_details.html'
-    class TabView(TemplateResponseMixin, View):
-        template_name = 'capsuler/pilot_details_tabs.html'
-        def get(self, request, pilotid, taskid):
-            pilot = get_object_or_404(UserPilot,
-                    pk=pilotid,
-                    user=request.user.get_profile())
-            result = request.session.get(taskid)
-            if result:
-                result.wait(timeout=60)
-            else:
-                pilot = None
-            return self.render_to_response({
-                'pilot': pilot,
-                })
+    def viewlets(self):
+        chardata = Viewlet()
+        chardata.hook('capsuler/pilot_details_chardata.html',
+                'tasks.fetch_character_sheet',
+                '/capsuler/tasks/chardata/',
+                r'^tasks/chardata/(?P<taskid>.+)/$',
+                login_required=True)
+        self.add_viewlet('chardata', chardata)
+
     def get(self, request, name):
         pilot = get_object_or_404(UserPilot,
                 public_info__name=name,
                 user=request.user.get_profile())
-        result = send_task('capsuler.fetch_character_data', (pilot.user.pk,), expires=60)
-        characterdata_taskid = result.task_id
-        request.session[characterdata_taskid] = result
+
+        chardata_task = self.get_viewlet('chardata').enqueue(request,
+                locals(),
+                (pilot.user.pk,),
+                expires=60)
         return self.render_to_response({
             'pilot': pilot,
-            'characterdata_taskid': characterdata_taskid,
-            'characterdata_url': '/capsuler/tasks/pilottabs/%d/' % pilot.pk,
+            'chardata_task': chardata_task,
+            })
+
+class AssetTable(tables.Table):
+    itemtype = ItemColumn(verbose_name='Item')
+    quantity = tables.Column()
+    locationid = LocationColumn(verbose_name='Location')
+    jitaprice = SystemItemPriceColumn(verbose_name='Jita Value', accessor='itemtype')
+    class Meta:
+        attrs = {'class': 'table table-condensed table-bordered table-striped'}
+        order_by = ('location', 'itemtype__typename')
+        orderable = True
+        template = 'core/armada_table.html'
+class PilotAssetsView(TaskViewletsView):
+    template_name = 'capsuler/pilot_assets.html'
+    def viewlets(self):
+        assetlist = Viewlet()
+        assetlist.hook('capsuler/pilot_assets_assetlist.html',
+                'tasks.fetch_character_assets',
+                '/capsuler/tasks/assetlist/',
+                r'^tasks/assetlist/(?P<taskid>.+)/$',
+                login_required=True)
+        self.add_viewlet('assetlist', assetlist)
+    def get(self, request, name):
+        pilot = get_object_or_404(UserPilot,
+                public_info__name=name,
+                user=request.user.get_profile(),
+                activated=True)
+        assets = Asset.objects.filter(owner=pilot).order_by('locationid', 'itemtype__typename')
+        assets_table = AssetTable(assets)
+        tables.RequestConfig(request, paginate={'per_page': 100}).configure(assets_table)
+        assetlist_task = self.get_viewlet('assetlist').enqueue(request,
+                {'assets_table': assets_table},
+                (pilot.user.pk,),
+                expires=60)
+        return self.render_to_response({
+            'pilot': pilot,
+            'assetlist_task': assetlist_task,
             })
 

@@ -1,6 +1,6 @@
 {% extends 'core/nav.html' %}
 {% load eve_tags %}
-{% load delayed_load %}
+{% load viewlets %}
 {% load render_table from django_tables2 %}
 {% load capsuler_tags %}
 {% block content %}
@@ -27,9 +27,7 @@
             {% endif %}
         </div>
         <div class="span4">
-            {% if characterdata_taskid %}
-            {% delayed_load '/core/pilotlist/' characterdata_taskid %}
-            {% endif %}
+            {% task_loader pilots_task%}
             <div class="row">
                 <h3>Jita mineral index</h3>
                 <div class="span2">

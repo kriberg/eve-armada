@@ -13,9 +13,11 @@ body {
     padding-top: 4em;
 }
 
-.system-item-price{
+span.system-item-price {
     font-family: monospace;
     text-align: right;
+    height: 36px;
+    display: inline-block;
 }
 
 span.price-buy {

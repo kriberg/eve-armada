@@ -292,17 +292,14 @@ class AllianceMembership(models.Model):
 
 class ConquerableStation(models.Model):
     id = models.IntegerField(primary_key=True)
+    solarsystem = models.ForeignKey(MapSolarsystem)
+    corporationid = models.IntegerField(null=True)
+    name = models.CharField(max_length=200)
+    stationtype = models.ForeignKey(InvType)
+    @property
+    def owner(self):
+        return Corporation.objects.get_corporation(self.corporationid)
 
-class Station(models.Model):
-    id = models.IntegerField(primary_key=True)
-    npcstation = models.ForeignKey(StaStation, null=True, related_name='station_npcstation')
-    conqstation = models.ForeignKey(ConquerableStation, null=True)
-
-class StationManager(models.Manager):
-    def get_station(stationid):
-        if not type(stationid) == int:
-            stationid = int(stationid)
-        #if stationid 
 
 class TypeAttributesView(models.Model):
     attribute = models.ForeignKey(DgmAttributetype, primary_key=True, db_column='attributeid')
