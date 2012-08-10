@@ -51,7 +51,7 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
  * Helper functions
  */
 var printisk = function (v) {
-    return parseFloat(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return $.format.number(parseFloat(v), '#,##0.00#');
 }
 
 /*
@@ -97,8 +97,8 @@ var init_isk_span = function () {
     });
 }
 
-var delayed_load = function (field, url, taskid) {
-    var id = '#' + field;
+var delayed_load = function (taskid, url) {
+    var id = '#' + taskid;
     $.get(url, function(data) {
         $(id).replaceWith(data);
         $(id).hide();

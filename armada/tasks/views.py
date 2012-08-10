@@ -4,81 +4,52 @@ from django.contrib.auth.decorators import login_required
 from django.template import Context
 from django.views.generic import View
 from django.views.generic.base import TemplateResponseMixin
+from django.utils.safestring import mark_safe
 
-from templatetags.viewlets import *
 import dispatcher
 
-class Viewlet(TemplateResponseMixin, View):
+class Subview(TemplateResponseMixin, View):
     template_name = None
     task_name = None
-    url_pattern = None
-    url = None
-    taskid = None
-    def hook(self, template_name, task_name, url, url_pattern, login_required=True):
-        self.template_name = template_name
-        self.task_name = task_name
-        self.url = url
-        self.url_pattern = url_pattern
-        self.login_required = login_required
-    def enqueue(self, request, context, *args, **kwargs):
-        self.request = request
-        self.context = context
-        taskid = dispatcher.dispatch(request.session, self.task_name, context, *args, **kwargs)
-        return self
-    def get(self, request, taskid):
-        print 'viewlet get triggered'
-        viewlet_descriptor = request.session.get(taskid)
-        if not viewlet_descriptor:
-            return HttpResponseForbidden()
+    sub_url = None
+    def enqueue(self, request, *args, **kwargs):
+        taskid = dispatcher.dispatch(request.session, self.task_name, *args, **kwargs)
+        # If the taskid is None, then the task result is still cached and we
+        # should render it diretcly. If not, task is queued and an ajax 
+        # callback is added.
+        if not taskid:
+            content = self.render(request,
+                    self.build_context(request, kwargs))
+        else:
+            if not self.sub_url.endswith('/'):
+                task_url = '%s/%s/' % (self.sub_url, taskid)
+            else:
+                task_url = '%s%s/' % (self.sub_url, taskid)
+            content = '''
+            <div id="%s">
+                <img src="/static/core/img/spinner.gif" alt="spinner" />
+                <script type="text/javascript">
+                    delayed_load("%s", "%s");
+                </script>
+            </div>
+            ''' % (taskid, taskid, task_url)
 
-        result = viewlet_descriptor['result']
-        result.get()
-        self.template_name = viewlet_descriptor['template_name']
-        return self.render_to_response(viewlet_descriptor['context'])
-    def render(self):
-        print 'viewlet render triggered'
-        resp = self.response_class(self.request,
+        return mark_safe(content)
+    def build_context(self, request, params):
+        raise NotImplemented()
+    def get(self, request, taskid):
+        result = request.session.get(taskid)
+        if not result:
+            return HttpResponseForbidden()
+        result['task'].get()
+        context = self.build_context(request, result['params'])
+        return self.render_to_response(context)
+    def render(self, request, context):
+        resp = self.response_class(request,
                 self.template_name,
-                Context(self.context))
+                Context(context))
         template = resp.resolve_template(self.template_name)
-        context = resp.resolve_context(self.context)
+        context = resp.resolve_context(context)
         content = template.render(context)
         return content
-    def get_url(self):
-        if not self.url.endswith('/'):
-            return '%s/%s/' % (self.url, self.taskid)
-        else:
-            return '%s%s/' % (self.url, self.taskid)
-
-
-class TaskViewletsView(TemplateResponseMixin, View):
-    __viewlets = {}
-    def __init__(self, *args, **kwargs):
-        super(View, self).__init__(*args, **kwargs)
-        super(TemplateResponseMixin, self).__init__(*args, **kwargs)
-        self.viewlets()
-
-    def viewlets(self):
-        raise NotImplemented()
-
-    def add_viewlet(self, name, viewlet):
-        self.__viewlets[name] = viewlet
-
-    def get_viewlet(self, name):
-        return self.__viewlets[name]
-
-    def viewlet_urls(self):
-        urls = []
-        for viewlet_name in self.__viewlets:
-            viewlet = self.__viewlets[viewlet_name]
-            if viewlet.url_pattern:
-                if viewlet.login_required:
-                    view = login_required(Viewlet.as_view())
-                else:
-                    view = Viewlet.as_view()
-                urls.append(url(viewlet.url_pattern, view))
-        return urls
-
-
-
 

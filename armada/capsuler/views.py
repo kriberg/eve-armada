@@ -101,65 +101,68 @@ class PilotDeactivateView(View):
 
         return HttpResponseRedirect('/capsuler/pilots/')
 
-class PilotDetailsView(TaskViewletsView):
+class PilotDetailsSubview(Subview):
+    template_name = 'capsuler/pilot_details_chardata.html'
+    task_name = 'tasks.fetch_character_sheet'
+    sub_url = '/capsuler/tasks/chardata/'
+    def build_context(self, request, params):
+        pilot = get_object_or_404(UserPilot,
+                public_info__name=params['pilotname'],
+                user=request.user.get_profile())
+        return {'pilot': pilot}
+class PilotDetailsView(TemplateResponseMixin, View):
     template_name = 'capsuler/pilot_details.html'
-    def viewlets(self):
-        chardata = Viewlet()
-        chardata.hook('capsuler/pilot_details_chardata.html',
-                'tasks.fetch_character_sheet',
-                '/capsuler/tasks/chardata/',
-                r'^tasks/chardata/(?P<taskid>.+)/$',
-                login_required=True)
-        self.add_viewlet('chardata', chardata)
-
     def get(self, request, name):
         pilot = get_object_or_404(UserPilot,
                 public_info__name=name,
                 user=request.user.get_profile())
 
-        chardata_task = self.get_viewlet('chardata').enqueue(request,
-                locals(),
+        pilot_details = PilotDetailsSubview().enqueue(request,
                 (pilot.user.pk,),
+                pilotname=name,
                 expires=60)
         return self.render_to_response({
             'pilot': pilot,
-            'chardata_task': chardata_task,
+            'pilot_details': pilot_details,
             })
 
 class AssetTable(tables.Table):
     itemtype = ItemColumn(verbose_name='Item')
     quantity = tables.Column()
     locationid = LocationColumn(verbose_name='Location')
-    jitaprice = SystemItemPriceColumn(verbose_name='Jita Value', accessor='itemtype')
+    jitaprice = SystemItemPriceColumn(verbose_name='Jita Value', record_accessor='itemtype')
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         order_by = ('location', 'itemtype__typename')
         orderable = True
         template = 'core/armada_table.html'
-class PilotAssetsView(TaskViewletsView):
-    template_name = 'capsuler/pilot_assets.html'
-    def viewlets(self):
-        assetlist = Viewlet()
-        assetlist.hook('capsuler/pilot_assets_assetlist.html',
-                'tasks.fetch_character_assets',
-                '/capsuler/tasks/assetlist/',
-                r'^tasks/assetlist/(?P<taskid>.+)/$',
-                login_required=True)
-        self.add_viewlet('assetlist', assetlist)
-    def get(self, request, name):
+class AssetSubview(Subview):
+    template_name = 'capsuler/pilot_assets_assetlist.html'
+    task_name = 'tasks.fetch_character_assets'
+    sub_url = '/capsuler/tasks/assetlist/'
+    def build_context(self, request, params):
         pilot = get_object_or_404(UserPilot,
-                public_info__name=name,
+                public_info__name=params['pilotname'],
                 user=request.user.get_profile(),
                 activated=True)
         assets = Asset.objects.filter(owner=pilot).order_by('locationid', 'itemtype__typename')
         assets_table = AssetTable(assets)
         tables.RequestConfig(request, paginate={'per_page': 100}).configure(assets_table)
-        assetlist_task = self.get_viewlet('assetlist').enqueue(request,
-                {'assets_table': assets_table},
-                (pilot.user.pk,),
+        return {'assets_table': assets_table}
+class PilotAssetsView(TemplateResponseMixin, View):
+    template_name = 'capsuler/pilot_assets.html'
+
+    def get(self, request, name):
+        pilot = get_object_or_404(UserPilot,
+                public_info__name=name,
+                user=request.user.get_profile(),
+                activated=True)
+        assetlist = AssetSubview().enqueue(request,
+                (pilot.pk,),
+                pilotname=name,
                 expires=60)
         return self.render_to_response({
             'pilot': pilot,
-            'assetlist_task': assetlist_task,
+            'assetlist': assetlist,
             })
 

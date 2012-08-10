@@ -9,7 +9,8 @@ import django_tables2 as tables
 from django_tables2.utils import A
 
 from lib.views import JSONView
-from lib.columns import SystemItemPriceColumn
+from lib.columns import SystemItemPriceColumn, \
+        ItemColumn
 from core.models import *
 from capsuler.models import UserPilot
 from eve.ccpmodels import MapSolarsystem, \
@@ -18,47 +19,39 @@ from eve.ccpmodels import MapSolarsystem, \
 from evecentral import EveCentral
 from celery.execute import send_task
 from tasks.tasks import *
-from tasks.views import *
+from tasks.views import Subview
 
 class MineralTable(tables.Table):
-    typename = tables.LinkColumn('item_details', args=[A('typename')], verbose_name='Item')
+    typename = ItemColumn(verbose_name='Item')
     jitaprice = SystemItemPriceColumn(verbose_name='price')
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         orderable = False
         template = 'core/armada_table.html'
-class ArmadaView(TaskViewletsView):
-    template_name = 'core/index.html'
+class PilotListSubview(Subview):
+    template_name = 'core/index_pilot_list.html'
+    sub_url = '/core/tasks/pilotlist/'
+    task_name = 'tasks.fetch_character_sheet'
+    def build_context(self, request, params):
+        capsuler = request.user.get_profile()
+        pilots = UserPilot.objects.filter(user=capsuler, activated=True)
+        return {'pilots': pilots}
 
-    def viewlets(self):
-        pilot_list = Viewlet()
-        pilot_list.hook('core/index_pilot_list.html',
-                'tasks.fetch_character_sheet',
-                '/core/tasks/pilotlist/',
-                r'^tasks/pilotlist/(?P<taskid>.+)/$',
-                login_required=True)
-        self.add_viewlet('pilot_list', pilot_list)
+class ArmadaView(TemplateResponseMixin, View):
+    template_name = 'core/index.html'
 
     def get(self, request):
         minerals = InvType.objects.filter(group=InvMarketgroup.objects.get(marketgroupname='Minerals')).order_by('pk').exclude(typename='Chalcopyrite')
         mineral_table = MineralTable(minerals)
         if request.user.is_authenticated():
-            capsuler = request.user.get_profile()
-            pilots = UserPilot.objects.filter(user=capsuler, activated=True)
-            if pilots.count() > 0:
-                pilots_task = self.get_viewlet('pilot_list').enqueue(request,
-                        {'pilots': pilots},
-                        (capsuler.pk,),
-                        expires=60)
-            else:
-                pilots_task = None
+            pilot_list = PilotListSubview().enqueue(request, (request.user.pk,), expires=60)
         else:
-            pilots_task = None
+            pilot_list = ''
 
 
         return self.render_to_response({
             'mineral_table': mineral_table,
-            'pilots_task': pilots_task,
+            'pilot_list': pilot_list,
             })
 
 

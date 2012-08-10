@@ -6,15 +6,18 @@ from lib.evemodels import get_location_name
 
 class SystemItemPriceColumn(tables.TemplateColumn):
     system = MapSolarsystem.objects.get(solarsystemname='Jita')
-    template_code = '{% load eve_tags %}{% system_item_price 30000142 record %}'
-    accessor = 'pk'
+    template_code = ''
     def __init__(self, *args, **kwargs):
-        super(SystemItemPriceColumn, self).__init__(*args, template_code=self.template_code, **kwargs)
+        template_code = '{% load eve_tags %}{% system_item_price '
         if 'system' in kwargs:
-            self.system = kwargs['system']
-        if 'accessor' in kwargs:
-            self.accessor = kwargs['accessor']
-        self.template_code = '{% load eve_tags %}{% system_item_price ' + str(self.system.pk) + ' record.' + str(self.accessor) + ' %}'
+            template_code += str(kwargs['system'].pk)
+        else:
+            template_code += '%d ' % self.system.pk
+        if 'record_accessor' in kwargs:
+            template_code += 'record.%s %%}' % kwargs.pop('record_accessor')
+        else:
+            template_code += 'record %}'
+        super(SystemItemPriceColumn, self).__init__(*args, template_code=template_code, **kwargs)
 
 class PriceColumn(tables.TemplateColumn):
     def render(self, value):
