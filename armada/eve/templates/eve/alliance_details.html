@@ -12,7 +12,7 @@
         </div>
     </div>
     <div class="row">
-        <div class="span2">
+        <div class="span3">
             <img src="http://image.eveonline.com/Alliance/{{ alliance.pk }}_128.png" alt="{{ alliance.name }} logo" />
             <dl>
                 <dt>Ticker</dt>
@@ -26,14 +26,14 @@
                 <dt>Status</dt>
                 <dd>{{ alliance.status }}</dd>
                 <dt>Executor corporation</dt>
-                <dd><a href="">{{ executor_corp.name }}</a></dd>
+                <dd><a href="{{ executor_corp.get_absolute_url }}">{{ executor_corp.name }}</a></dd>
                 <dt>Links</dt>
                 <dd><a href="http://evemaps.dotlan.net/alliance/{{ alliance.get_dotlan_slug }}">dotlan</a></dd>
                 <dd><a href="http://evewho.com/alli/{{ alliance.get_evewho_slug }}">EveWho</a></dd>
                 <dd><a href="http://eve-kill.net/?a=alliance_detail&all_external_id={{ alliance.pk }}">EVE-Kill</a></dd>
             </dl>
         </div>
-        <div class="span6">
+        <div class="span8">
             <h2>Member corporations</h2>
             {% render_table member_corporations_table %}
         </div>
