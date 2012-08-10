@@ -1,5 +1,5 @@
 {% extends 'core/nav.html' %}
-{% load bootstrap %}
+{% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
     <div class="row">
@@ -12,7 +12,7 @@
             {% csrf_token %}
             {{ apiformset.management_form }}
             {% for form in apiformset %}
-                {{ form|bootstrap }}
+                {{ form|crispy }}
             {% endfor %}
             <button type="submit" class="btn pull-right">Save</button>
         </form>

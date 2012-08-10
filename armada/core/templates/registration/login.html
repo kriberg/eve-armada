@@ -1,5 +1,5 @@
 {% extends 'core/nav.html' %}
-{% load bootstrap %}
+{% load crispy_forms_tags %}
 {% block content %}
 <div class="container">
     <div class="page-header">
@@ -12,7 +12,7 @@
             {% endif %}
             <form class="form form-horizontal" method="post">
                 {% csrf_token %}
-                {{ form|bootstrap }}
+                {{ form|crispy }}
                 <button type="submit" class="btn pull-right">Login</button>
                 <input type="hidden" name="next" value="/" />
             </form>
