@@ -21,7 +21,7 @@ class SystemItemPriceColumn(tables.TemplateColumn):
 
 class PriceColumn(tables.TemplateColumn):
     def render(self, value):
-        return format(value, ',.2f').replace(',', ' ')
+        return format(value, ',.2f')
 
 class LocationColumn(tables.TemplateColumn):
     def render(self, value):
