@@ -12,13 +12,13 @@
         </div>
     </div>
     <div class="row">
-        <div class="span2">
+        <div class="span3">
             <img src="http://image.eveonline.com/Corporation/{{ corporation.pk }}_128.png" alt="{{ corporation.name }} logo" />
             <dl>
                 <dt>Ticker</dt>
                 <dd>{{ corporation.ticker }}</dd>
                 <dt>Alliance</dt>
-                <dd>{{ corporation.alliance }}</dd>
+                <dd><a href="{{ corporation.alliance.get_absolute_url }}">{{ corporation.alliance }}</a></dd>
                 <dt>CEO</dt>
                 <dd>{{ corporation.ceo }}</dd>
                 <dt>Members</dt>
@@ -36,7 +36,7 @@
                 <dd><a href="http://evewho.com/corp/{{ corporation.get_evewho_slug }}">EveWho</a></dd>
             </dl>
         </div>
-        <div class="span4">
+        <div class="span8">
             <p>
                 {{ corporation.description|evehtmlcleaner|linebreaks}}
             </p>
