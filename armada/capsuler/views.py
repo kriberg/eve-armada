@@ -4,7 +4,6 @@ from django.views.generic import View
 from django.views.generic.base import TemplateResponseMixin
 from django.forms.models import modelformset_factory
 
-from guardian.shortcuts import assign
 from celery.execute import send_task
 from datetime import datetime
 import json
@@ -43,7 +42,6 @@ class APIView(TemplateResponseMixin, View):
             for apikey in apikeys:
                 apikey.user = request.user.get_profile()
                 apikey.save()
-                assign('use_apikey', request.user, apikey)
         else:
             return self.render_to_response({
                 'apiformset': apiformset,
@@ -97,6 +95,10 @@ class PilotDeactivateView(View):
         pilot = get_object_or_404(UserPilot,
                 pk=characterid,
                 user=request.user.get_profile())
+        for key in request.session.keys():
+            if key.startswith('tasks'):
+                del request.session[key]
+
         pilot.delete()
 
         return HttpResponseRedirect('/capsuler/pilots/')

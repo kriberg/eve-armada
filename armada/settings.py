@@ -110,7 +110,6 @@ MIDDLEWARE_CLASSES = (
 )
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    'guardian.backends.ObjectPermissionBackend',
 )
 ROOT_URLCONF = 'urls'
 
@@ -130,10 +129,9 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.humanize',
+    'crispy_forms',
     'registration',
-    'bootstrapform',
     'django_tables2',
-    'guardian',
     'djcelery',
 #   'debug_toolbar',
     'tasks',
@@ -167,8 +165,6 @@ LOGGING = {
 
 # django-registration
 ACCOUNT_ACTIVATION_DAYS = 7
-# django-guardian
-ANONYMOUS_USER_ID = -1
 
 # django email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -180,6 +176,7 @@ EMAIL_USE_TLS = ''
 
 AUTH_PROFILE_MODULE = 'capsuler.Capsuler'
 
+# Celery
 import djcelery
 djcelery.setup_loader()
 BROKER_HOST = "localhost"
@@ -189,6 +186,7 @@ BROKER_PASSWORD = "guest"
 BROKER_VHOST = "/"
 CELERY_CONCURRENY = 50
 CELERY_DISABLE_RATE_LIMITS = True
+
 
 try:
     from local_settings import *
