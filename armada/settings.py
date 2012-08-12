@@ -188,6 +188,8 @@ CELERY_CONCURRENY = 50
 CELERY_DISABLE_RATE_LIMITS = True
 
 
+WSGI_APPLICATION = 'armada.wsgi.application'
+
 try:
     from local_settings import *
 except:
