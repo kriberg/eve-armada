@@ -1,11 +1,11 @@
 
-from eve.models import *
 from django.core.management.base import NoArgsCommand
-from lib.api import public
 from datetime import datetime
 from traceback import format_exc
 
 
+from armada.eve.models import *
+from armada.lib.api import public
 
 class Command(NoArgsCommand):
     help = "Fetches the conquerable stations list from the API web service."

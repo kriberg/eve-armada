@@ -98,6 +98,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "django.contrib.messages.context_processors.messages",
     "django.core.context_processors.request",
+    "pybb.context_processors.processor",
 )
 
 MIDDLEWARE_CLASSES = (
@@ -106,12 +107,15 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-#   'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'pybb.middleware.PybbMiddleware',
 )
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
-ROOT_URLCONF = 'urls'
+ROOT_URLCONF = 'armada.urls'
+
+WSGI_APPLICATION = 'armada.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
@@ -133,11 +137,14 @@ INSTALLED_APPS = (
     'registration',
     'django_tables2',
     'djcelery',
-#   'debug_toolbar',
-    'tasks',
-    'core',
-    'eve',
-    'capsuler',
+    'pybb',
+    'pytils',
+    'sorl.thumbnail',
+    'pure_pagination',
+    'armada.tasks',
+    'armada.core',
+    'armada.eve',
+    'armada.capsuler',
 )
 
 # A sample logging configuration. The only tangible logging
@@ -187,8 +194,10 @@ BROKER_VHOST = "/"
 CELERY_CONCURRENY = 50
 CELERY_DISABLE_RATE_LIMITS = True
 
-
-WSGI_APPLICATION = 'armada.wsgi.application'
+# PyBBm
+PYBB_TEMPLATE = 'core/nav.html'
+PYBB_MARKUP = 'markdown'
+PYBB_ENABLE_ANONYMOUS_POST = False
 
 try:
     from local_settings import *

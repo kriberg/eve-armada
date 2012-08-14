@@ -1,7 +1,7 @@
 from django import template
 register = template.Library()
 
-from capsuler.models import UserPilot
+from armada.capsuler.models import UserPilot
 
 @register.simple_tag()
 def pilot_property(pilot, key):

@@ -7,16 +7,18 @@ from django.db.models import Sum
 
 from datetime import datetime
 
-from eve.models import Corporation, \
+from pybb.models import PybbProfile
+
+from armada.eve.models import Corporation, \
         Character
-from eve.ccpmodels import InvType, \
+from armada.eve.ccpmodels import InvType, \
         CrtCertificate, \
         DgmTypeattribute
-from lib.api import private
-from lib.evemodels import get_location_name
+from armada.lib.api import private
+from armada.lib.evemodels import get_location_name
 
 
-class Capsuler(models.Model):
+class Capsuler(PybbProfile):
     user = models.OneToOneField(User)
 
     def get_api_keys(self):

@@ -8,26 +8,26 @@ import json
 import django_tables2 as tables
 from django_tables2.utils import A
 
-from lib.views import JSONView
-from lib.columns import SystemItemPriceColumn, \
+from armada.lib.views import JSONView
+from armada.lib.columns import SystemItemPriceColumn, \
         ItemColumn
-from core.models import *
-from capsuler.models import UserPilot
-from eve.ccpmodels import MapSolarsystem, \
+from armada.core.models import *
+from armada.capsuler.models import UserPilot
+from armada.eve.ccpmodels import MapSolarsystem, \
         InvMarketgroup, \
         InvType
-from evecentral import EveCentral
+from armada.lib.evecentral import EveCentral
 from celery.execute import send_task
-from tasks.tasks import *
-from tasks.views import Subview
+from armada.tasks.tasks import *
+from armada.tasks.views import Subview
 
 class MineralTable(tables.Table):
     typename = ItemColumn(verbose_name='Item')
     jitaprice = SystemItemPriceColumn(verbose_name='price')
+    template_name = 'core/armada_table.html'
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         orderable = False
-        template = 'core/armada_table.html'
 class PilotListSubview(Subview):
     template_name = 'core/index_pilot_list.html'
     sub_url = '/core/tasks/pilotlist/'

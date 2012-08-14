@@ -2,13 +2,13 @@ from datetime import datetime
 from traceback import format_exc
 
 from django.db import models
-from settings import STATIC_URL
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 from django.template.defaultfilters import slugify
 
-from eve.ccpmodels import *
-from lib.api.public import get_corporation_sheet, \
+from armada.settings import STATIC_URL
+from armada.eve.ccpmodels import *
+from armada.lib.api.public import get_corporation_sheet, \
         get_character_sheet, \
         get_names_to_ids
 

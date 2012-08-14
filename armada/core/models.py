@@ -1,5 +1,5 @@
 from django.db import models
-from eve.ccpmodels import *
+from armada.eve.ccpmodels import *
 
 class EveCentralOrderManager(models.Manager):
     def get_buy_orders(self):

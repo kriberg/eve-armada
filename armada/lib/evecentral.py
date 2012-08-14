@@ -1,8 +1,9 @@
-from eve.models import *
 import urllib2
 from BeautifulSoup import BeautifulStoneSoup
-from core.models import *
 from datetime import datetime
+
+from armada.core.models import *
+from armada.eve.models import *
 
 class EveCentral():
     endpoint='http://api.eve-central.com/api/marketstat'

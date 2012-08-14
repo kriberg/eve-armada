@@ -1,11 +1,11 @@
 
-from core.models import *
 from django.core.management.base import NoArgsCommand
-from lib.api import public
 from datetime import datetime
 from traceback import print_stack
 
 
+from armada.core.models import *
+from armada.lib.api import public
 
 class Command(NoArgsCommand):
     help = "Fetches the alliance list and all member corporations from the API web service."

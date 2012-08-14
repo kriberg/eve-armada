@@ -1,8 +1,8 @@
 from django.core.urlresolvers import reverse
 from django.utils.safestring import mark_safe
 import django_tables2 as tables
-from eve.ccpmodels import MapSolarsystem
-from lib.evemodels import get_location_name
+from armada.eve.ccpmodels import MapSolarsystem
+from armada.lib.evemodels import get_location_name
 
 class SystemItemPriceColumn(tables.TemplateColumn):
     system = MapSolarsystem.objects.get(solarsystemname='Jita')
@@ -19,14 +19,14 @@ class SystemItemPriceColumn(tables.TemplateColumn):
             template_code += 'record %}'
         super(SystemItemPriceColumn, self).__init__(*args, template_code=template_code, **kwargs)
 
-class PriceColumn(tables.TemplateColumn):
+class PriceColumn(tables.Column):
     def render(self, value):
         return format(value, ',.2f')
 
-class LocationColumn(tables.TemplateColumn):
+class LocationColumn(tables.Column):
     def render(self, value):
         return get_location_name(value)
 
-class ItemColumn(tables.TemplateColumn):
+class ItemColumn(tables.Column):
     def render(self, value):
         return mark_safe('<a href="%s">%s</a>' % (reverse('item_details', args=(value,)), value))

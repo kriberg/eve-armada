@@ -1,9 +1,9 @@
-from eve.models import *
 from django.core.management.base import NoArgsCommand
-from lib.api import public
 from datetime import datetime
 from traceback import print_stack
 
+from armada.eve.models import *
+from armada.lib.api import public
 
 
 class Command(NoArgsCommand):

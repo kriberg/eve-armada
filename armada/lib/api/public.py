@@ -1,4 +1,4 @@
-from lib.api.common import *
+from armada.lib.api.common import *
 
 def get_alliance_list():
     return get_list('eve', 'AllianceList')

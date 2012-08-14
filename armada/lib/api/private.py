@@ -1,4 +1,4 @@
-from lib.api.common import *
+from armada.lib.api.common import *
 
 def get_account_characters(keyID, vCode):
     return get_list('account', 'Characters', keyID=keyID, vCode=vCode)

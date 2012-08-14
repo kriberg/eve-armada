@@ -1,5 +1,5 @@
-from eve.ccpmodels import MapDenormalize
-from eve.models import ConquerableStation
+from armada.eve.ccpmodels import MapDenormalize
+from armada.eve.models import ConquerableStation
 
 def get_attributes_by_categories(item):
     type_attributes = DgmTypeattribute.objects.filter(type=item)

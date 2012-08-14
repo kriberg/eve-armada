@@ -1,5 +1,5 @@
 from django.conf.urls.defaults import patterns, include, url
-from eve.views import ItemListView, \
+from armada.eve.views import ItemListView, \
         ItemView, \
         InvTypeJSON, \
         AllianceListView, \

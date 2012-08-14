@@ -10,13 +10,13 @@ import json
 import django_tables2 as tables
 from django_tables2.utils import A
 
-from lib.columns import SystemItemPriceColumn, \
+from armada.lib.columns import SystemItemPriceColumn, \
         LocationColumn, \
         ItemColumn
 
-from capsuler.models import *
-from tasks.dispatcher import *
-from tasks.views import *
+from armada.capsuler.models import *
+from armada.tasks.dispatcher import *
+from armada.tasks.views import *
 
 
 class APIView(TemplateResponseMixin, View):
@@ -133,11 +133,11 @@ class AssetTable(tables.Table):
     quantity = tables.Column()
     locationid = LocationColumn(verbose_name='Location')
     jitaprice = SystemItemPriceColumn(verbose_name='Jita Value', record_accessor='itemtype')
+    template_name = 'core/armada_table.html'
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         order_by = ('location', 'itemtype__typename')
         orderable = True
-        template = 'core/armada_table.html'
 class AssetSubview(Subview):
     template_name = 'capsuler/pilot_assets_assetlist.html'
     task_name = 'tasks.fetch_character_assets'

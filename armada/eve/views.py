@@ -8,13 +8,13 @@ import json
 import django_tables2 as tables
 from django_tables2.utils import A
 
-from lib.views import JSONView
-from lib.columns import SystemItemPriceColumn, \
+from armada.lib.views import JSONView
+from armada.lib.columns import SystemItemPriceColumn, \
         PriceColumn
-from eve.templatetags.eve_tags import *
-from eve.models import *
-from eve.ccpmodels import *
-from core.evecentral import EveCentral
+from armada.eve.templatetags.eve_tags import *
+from armada.eve.models import *
+from armada.eve.ccpmodels import *
+from armada.lib.evecentral import EveCentral
 
 class InvTypeJSON(JSONView):
     base_queryset = InvType.objects.filter(published=True)
@@ -36,13 +36,13 @@ class ItemListView(TemplateResponseMixin, View):
         group = tables.Column()
         baseprice = PriceColumn()
         jitaprice = SystemItemPriceColumn(verbose_name='jita price', orderable=False)
+        template_name = 'core/armada_table.html'
 
         class Meta:
             attrs = {'class': 'table table-condensed table-bordered table-striped span12',
                     'id': 'item_table'}
             orderable = True
             order_by = ('name', )
-            template = 'core/armada_table.html'
     def filter_items(self, request):
         items = InvType.objects.filter(published=True,
                 volume__gt=0.0)
@@ -95,11 +95,11 @@ class AllianceListView(TemplateResponseMixin, View):
         ticker = tables.Column()
         start_date = tables.Column(verbose_name='established')
         member_count = tables.Column(verbose_name='members')
+        template_name = 'core/armada_table.html'
         class Meta:
             attrs = {'class': 'table table-condensed table-bordered table-striped span12'}
             orderable = True
             order_by = ('-member_count', 'name')
-            template = 'core/armada_table.html'
 
     def get(self, request):
         alliance_table = self.AllianceTable(Alliance.objects.all())
@@ -115,11 +115,11 @@ class AllianceView(TemplateResponseMixin, View):
         ticker = tables.Column()
         joined = None
         member_count = tables.Column(verbose_name='members')
+        template_name = 'core/armada_table.html'
         class Meta:
             attrs = {'class': 'table table-condensed table-bordered table-striped span8'}
             orderable = True
             order_by = ('-member_count', 'name')
-            template = 'core/armada_table.html'
 
     def get(self, request, alliance):
         alliance = get_object_or_404(Alliance, name=alliance.replace('_', ' '))
@@ -144,11 +144,11 @@ class CorporationListView(TemplateResponseMixin, View):
         name = tables.LinkColumn('corporation_details', args=[A('name')])
         ticker = tables.Column()
         member_count = tables.Column(verbose_name='members')
+        template_name = 'core/armada_table.html'
         class Meta:
             attrs = {'class': 'table table-condensed table-bordered table-striped span12'}
             orderable = True
             order_by = ('-member_count', 'name')
-            template = 'core/armada_table.html'
     def get(self, request):
         corporations_table = self.CorporationTable(Corporation.objects.all())
         tables.RequestConfig(request).configure(corporations_table)

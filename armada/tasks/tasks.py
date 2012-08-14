@@ -1,5 +1,5 @@
-from capsuler.models import *
-from lib.api import private
+from armada.capsuler.models import *
+from armada.lib.api import private
 from datetime import datetime
 
 from celery.task import task

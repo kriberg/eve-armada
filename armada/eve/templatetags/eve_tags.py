@@ -1,5 +1,5 @@
 from django import template
-from eve.models import TypeAttributesView, \
+from armada.eve.models import TypeAttributesView, \
         Corporation, \
         Alliance, \
         Character

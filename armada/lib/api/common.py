@@ -1,6 +1,7 @@
-from lib.api import eveapi
 from django.core.cache import cache
 from datetime import datetime
+
+from armada.lib.api import eveapi
 
 def get_api():
     return eveapi.EVEAPIConnection()

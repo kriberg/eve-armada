@@ -1,6 +1,6 @@
 from django.conf.urls.defaults import patterns, include, url
 from django.contrib.auth.decorators import login_required
-from core.views import PriceView, \
+from armada.core.views import PriceView, \
         SystemPriceView, \
         ArmadaView, \
         PilotListSubview
