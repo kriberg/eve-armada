@@ -67,8 +67,7 @@ After loading the eve static data export, we generate the django models for the
 dump and put those in eve/ccpmodels.py.
 
 <pre>
-cd armada
-python manage.py generateevemodels ../data/eve_table_names.txt > eve/ccpmodels.py
+python manage.py generateevemodels data/eve_table_names.txt > armada/eve/ccpmodels.py
 </pre>
 
 ### Fix compound keys
