@@ -133,7 +133,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.admindocs',
     'django.contrib.humanize',
-    'django-bcrypt',
+    'django_bcrypt',
     'crispy_forms',
     'registration',
     'django_tables2',
