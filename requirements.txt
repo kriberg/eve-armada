@@ -7,3 +7,4 @@ django-crispy-forms==1.1.4
 django-registration==0.8
 django-tables2==0.11.0
 psycopg2==2.4.4
+django-bcrypt==0.9.2
