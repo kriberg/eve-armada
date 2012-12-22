@@ -40,6 +40,7 @@ USE_I18N = True
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
 USE_L10N = True
+USE_THOUSAND_SEPARATOR = True
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -146,6 +147,8 @@ INSTALLED_APPS = (
     'armada.core',
     'armada.eve',
     'armada.capsuler',
+    'armada.corporation',
+    'armada.stocker',
 )
 
 # A sample logging configuration. The only tangible logging

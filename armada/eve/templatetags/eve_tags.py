@@ -4,6 +4,7 @@ from armada.eve.models import TypeAttributesView, \
         Alliance, \
         Character
 
+from armada.lib.evemodels import get_location_name as eve_get_location_name
 from BeautifulSoup import BeautifulSoup
 import json
 register = template.Library()
@@ -28,3 +29,7 @@ def evehtmlcleaner(value):
 @register.simple_tag()
 def character_portrait(character, size):
     return '<img src="http://image.eveonline.com/Character/%d_%d.jpg" alt="%s" />' % (character.pk, size, character.name)
+
+@register.simple_tag()
+def get_location_name(location):
+    return eve_get_location_name(location)

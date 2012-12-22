@@ -1,4 +1,4 @@
-.table td.number {
+table td.number {
     text-align: right;
     font-family: monospace;
 }
@@ -29,4 +29,8 @@ span.price-sell {
 
 #profile_skills {
     padding-top: 10px;
+}
+
+#stockgroupitem-table input {
+    width: 95%;
 }

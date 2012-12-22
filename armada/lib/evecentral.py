@@ -1,6 +1,7 @@
 import urllib2
 from BeautifulSoup import BeautifulStoneSoup
-from datetime import datetime
+from datetime import datetime, timedelta
+from traceback import format_exc
 
 from armada.core.models import *
 from armada.eve.models import *
@@ -24,28 +25,31 @@ class EveCentral():
                 fresh_pot.append(item)
         parameters = []
         if len(fresh_pot) > 0:
-            for item in fresh_pot:
-                parameters.append('typeid=%d' % item.pk)
-            parameters.append('regionlimit=%d' % region.pk)
-            soup = self._request(parameters)
-            for itemsoup in soup.findAll('type'):
-                bvol = itemsoup.find('buy').find('volume').renderContents()
-                bavg = itemsoup.find('buy').find('avg').renderContents()
-                bmax = itemsoup.find('buy').find('max').renderContents()
-                bmin = itemsoup.find('buy').find('min').renderContents()
-                bstddev = itemsoup.find('buy').find('stddev').renderContents()
-                bmedian = itemsoup.find('buy').find('median').renderContents()
-                bpercentile = itemsoup.find('buy').find('percentile').renderContents()
-                svol = itemsoup.find('sell').find('volume').renderContents()
-                savg = itemsoup.find('sell').find('avg').renderContents()
-                smax = itemsoup.find('sell').find('max').renderContents()
-                smin = itemsoup.find('sell').find('min').renderContents()
-                sstddev = itemsoup.find('sell').find('stddev').renderContents()
-                smedian = itemsoup.find('sell').find('median').renderContents()
-                spercentile = itemsoup.find('sell').find('percentile').renderContents()
-                item = InvType.objects.get(pk=itemsoup['id'])
-                try:
-                    irfp = ItemRegionFloatingPrice.objects.get(item=item, region=region)
+            for block in [fresh_pot[i:i+100] for i in range(0, len(fresh_pot)+1, 100)]:
+                for item in block:
+                    parameters.append('typeid=%d' % item.pk)
+                parameters.append('regionlimit=%d' % region.pk)
+                soup = self._request(parameters)
+                for itemsoup in soup.findAll('type'):
+                    bvol = itemsoup.find('buy').find('volume').renderContents()
+                    bavg = itemsoup.find('buy').find('avg').renderContents()
+                    bmax = itemsoup.find('buy').find('max').renderContents()
+                    bmin = itemsoup.find('buy').find('min').renderContents()
+                    bstddev = itemsoup.find('buy').find('stddev').renderContents()
+                    bmedian = itemsoup.find('buy').find('median').renderContents()
+                    bpercentile = itemsoup.find('buy').find('percentile').renderContents()
+                    svol = itemsoup.find('sell').find('volume').renderContents()
+                    savg = itemsoup.find('sell').find('avg').renderContents()
+                    smax = itemsoup.find('sell').find('max').renderContents()
+                    smin = itemsoup.find('sell').find('min').renderContents()
+                    sstddev = itemsoup.find('sell').find('stddev').renderContents()
+                    smedian = itemsoup.find('sell').find('median').renderContents()
+                    spercentile = itemsoup.find('sell').find('percentile').renderContents()
+                    item = InvType.objects.get(pk=itemsoup['id'])
+                    try:
+                        irfp = ItemRegionFloatingPrice.objects.get(item=item, region=region)
+                    except ItemRegionFloatingPrice.DoesNotExist:
+                        irfp = ItemRegionFloatingPrice(item = item, region=region)
                     irfp.buy_volume = bvol
                     irfp.buy_average = bavg
                     irfp.buy_maximum = bmax
@@ -60,42 +64,32 @@ class EveCentral():
                     irfp.sell_stddev = sstddev
                     irfp.sell_median = smedian
                     irfp.sell_percentile = spercentile
-                    irfp.save()
-                except ItemRegionFloatingPrice.DoesNotExist:
-                    irfp = ItemRegionFloatingPrice(item = item, region=region,
-                            buy_volume = bvol,
-                            buy_average = bavg,
-                            buy_maximum = bmax,
-                            buy_minimum = bmin,
-                            buy_stddev = bstddev,
-                            buy_median = bmedian,
-                            buy_percentile = bpercentile,
-                            sell_volume = svol,
-                            sell_average = savg,
-                            sell_maximum = smax,
-                            sell_minimum = smin,
-                            sell_stddev = sstddev,
-                            sell_median = smedian,
-                            sell_percentile = spercentile)
+                    irfp.timestamp = datetime.now()
                     irfp.save()
         return ItemRegionFloatingPrice.objects.filter(item__in=items, region=region)
 
     def get_items_system_price(self, items, system):
         fresh_pot = []
-        for item in items:
-            try:
-                irfp = ItemSystemFloatingPrice.objects.get(item=item, system=system)
-                if (datetime.now() - irfp.timestamp).total_seconds() > 3600:
-                    fresh_pot.append(item)
+        fresh_pots = ItemSystemFloatingPrice.objects.filter(item__in=items,
+                system=system,
+                timestamp__gte=datetime.now()-timedelta(hours=1))
+        new_pots = items.exclude(pk__in=[i.pk for i in fresh_pots])
+        print len(fresh_pots), len(new_pots), len(items)
+        all_pots = [item for item in fresh_pots] + [item for item in new_pots]
 
-            except ItemSystemFloatingPrice.DoesNotExist:
-                fresh_pot.append(item)
-        parameters = []
-        if len(fresh_pot) > 0:
-            for item in fresh_pot:
+
+        print 'Fetching %d items for system %s' % (len(all_pots), system.solarsystemname)
+        for block in [all_pots[i:i+64] for i in range(0, len(all_pots), 64)]:
+            parameters = []
+            for item in block:
                 parameters.append('typeid=%d' % item.pk)
             parameters.append('usesystem=%d' % system.pk)
-            soup = self._request(parameters)
+            try:
+                soup = self._request(parameters)
+                print 'Block done'
+            except Exception, ex:
+                print format_exc(ex)
+                continue
             for itemsoup in soup.findAll('type'):
                 bvol = itemsoup.find('buy').find('volume').renderContents()
                 bavg = itemsoup.find('buy').find('avg').renderContents()
@@ -114,38 +108,24 @@ class EveCentral():
                 item = InvType.objects.get(pk=itemsoup['id'])
                 try:
                     isfp = ItemSystemFloatingPrice.objects.get(item=item, system=system)
-                    isfp.buy_volume = bvol
-                    isfp.buy_average = bavg
-                    isfp.buy_maximum = bmax
-                    isfp.buy_minimum = bmin
-                    isfp.buy_stddev = bstddev
-                    isfp.buy_median = bmedian
-                    isfp.buy_percentile = bpercentile
-                    isfp.sell_volume = svol
-                    isfp.sell_average = savg
-                    isfp.sell_maximum = smax
-                    isfp.sell_minimum = smin
-                    isfp.sell_stddev = sstddev
-                    isfp.sell_median = smedian
-                    isfp.sell_percentile = spercentile
-                    isfp.save()
                 except ItemSystemFloatingPrice.DoesNotExist:
-                    isfp = ItemSystemFloatingPrice(item = item, system=system,
-                            buy_volume = bvol,
-                            buy_average = bavg,
-                            buy_maximum = bmax,
-                            buy_minimum = bmin,
-                            buy_stddev = bstddev,
-                            buy_median = bmedian,
-                            buy_percentile = bpercentile,
-                            sell_volume = svol,
-                            sell_average = savg,
-                            sell_maximum = smax,
-                            sell_minimum = smin,
-                            sell_stddev = sstddev,
-                            sell_median = smedian,
-                            sell_percentile = spercentile)
-                    isfp.save()
+                    isfp = ItemSystemFloatingPrice(item = item, system=system)
+                isfp.buy_volume = bvol
+                isfp.buy_average = bavg
+                isfp.buy_maximum = bmax
+                isfp.buy_minimum = bmin
+                isfp.buy_stddev = bstddev
+                isfp.buy_median = bmedian
+                isfp.buy_percentile = bpercentile
+                isfp.sell_volume = svol
+                isfp.sell_average = savg
+                isfp.sell_maximum = smax
+                isfp.sell_minimum = smin
+                isfp.sell_stddev = sstddev
+                isfp.sell_median = smedian
+                isfp.sell_percentile = spercentile
+                isfp.timestamp = datetime.now()
+                isfp.save()
         return ItemSystemFloatingPrice.objects.filter(item__in=items, system=system)
 
     def get_systems_item_price(self, systems, item):

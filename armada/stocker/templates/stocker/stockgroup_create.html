@@ -1,0 +1,23 @@
+{% extends 'core/nav.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Create stock group</h1>
+        </div>
+    </div>
+    <div class="row">
+        <form class="form form-horizontal span6" method="post">
+            {% csrf_token %}
+            {{ stockgroupform|crispy }}
+            <button type="submit" class="btn pull-right">Create group</button>
+            <a href="{{ team.get_absolute_url }}" class="btn pull-right">Cancel</a>
+        </form>
+    </div>
+</div>
+<script type="text/javascript">
+    init_location_typeahead('#id_location');
+</script>
+{% endblock %}
+

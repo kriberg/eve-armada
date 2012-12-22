@@ -22,7 +22,7 @@ from armada.tasks.views import *
 class APIView(TemplateResponseMixin, View):
     template_name = 'capsuler/api.html'
     UserAPIKeyFormSet = modelformset_factory(UserAPIKey,
-            exclude=('user',),
+            exclude=('user', 'keytype', 'accessmask', 'expires'),
             extra=1,
             can_delete=True)
 

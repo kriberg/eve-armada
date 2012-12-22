@@ -51,7 +51,8 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
  * Helper functions
  */
 var printisk = function (v) {
-    return $.format.number(parseFloat(v), '#,##0.00#');
+    //return $.format.number(parseFloat(v), '#,##0.00#');
+    return v;
 }
 
 /*
@@ -60,7 +61,21 @@ var printisk = function (v) {
 var init_eve_items = function () {
     $(".collapse").collapse({toggle:false});
     $.getJSON('/eve/typeahead/invtype_name/', function(data) {
-        $('#item-name-search').typeahead({source: data});
+        $('#item-name-search').typeahead({source: data, items: 30});
+    });
+}
+
+var init_location_typeahead = function (selector) {
+    $(".collapse").collapse({toggle:false});
+    $.getJSON('/eve/typeahead/location_name/', function(data) {
+        $(selector).typeahead({source: data, items: 30});
+    });
+}
+
+var init_invtype_typeahead = function (selector) {
+    $(".collapse").collapse({toggle:false});
+    $.getJSON('/eve/typeahead/invtype_name/', function(data) {
+        $(selector).typeahead({source: data, items: 30});
     });
 }
 

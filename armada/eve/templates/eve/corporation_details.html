@@ -17,16 +17,20 @@
             <dl>
                 <dt>Ticker</dt>
                 <dd>{{ corporation.ticker }}</dd>
+                {% if corporation.alliance %}
                 <dt>Alliance</dt>
                 <dd><a href="{{ corporation.alliance.get_absolute_url }}">{{ corporation.alliance }}</a></dd>
+                {% endif %}
                 <dt>CEO</dt>
                 <dd>{{ corporation.ceo }}</dd>
                 <dt>Members</dt>
                 <dd>{{ corporation.member_count }}</dd>
                 <dt>Tax rate</dt>
                 <dd>{{ corporation.tax_rate }} %</dd>
+                {% comment %}
                 <dt>Status</dt>
                 <dd>{{ corporation.status }}</dd>
+                {% endcomment %}
                 <dt>Links</dt>
                 {% if corporation.url|length > 0 %}
                 <dd><a href="{{ corporation.url }}">{{ corporation.url }}</a></dd>

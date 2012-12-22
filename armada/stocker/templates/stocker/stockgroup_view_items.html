@@ -1,0 +1,32 @@
+{% load eve_tags %}
+{% load humanize %}
+        <ul class="unstyled span12">
+            <li>
+                Location: {{ group.location }}
+            </li>
+            {% if group.division %}
+            <li>
+                Division: {{ group.division.flagtext }}
+            </li>
+            {% endif %}
+            <li>Assets updated: {{ group.get_fetch_time }}</li>
+            <li>Cached until: {{ group.get_cached_until }}</li>
+        </ul>
+        <div class="span12">
+            <table class="stocker">
+                {% for item in group.get_items %}
+                <tr>
+                    <td class="span4">{% invtype_icon item.item 32 %} {{ item.item }}</td>
+                    <td class="number">
+                        {% if item.get_level == 2 %}
+                        <span class="critical">{{ item.get_amount|intcomma }}</span>
+                        {% elif item.get_level == 1 %}
+                        <span class="warning">{{ item.get_amount|intcomma }}</span>
+                        {% else %}
+                        {{ item.get_amount|intcomma }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>

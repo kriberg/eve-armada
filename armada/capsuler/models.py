@@ -6,6 +6,7 @@ from django.contrib import admin
 from django.db.models import Sum
 
 from datetime import datetime
+from traceback import format_exc
 
 from pybb.models import PybbProfile
 
@@ -13,7 +14,8 @@ from armada.eve.models import Corporation, \
         Character
 from armada.eve.ccpmodels import InvType, \
         CrtCertificate, \
-        DgmTypeattribute
+        DgmTypeattribute, \
+        InvFlag
 from armada.lib.api import private
 from armada.lib.evemodels import get_location_name
 
@@ -23,15 +25,25 @@ class Capsuler(PybbProfile):
 
     def get_api_keys(self):
         return UserAPIKey.objects.filter(user=self)
+    def get_character_api_keys(self):
+        return UserAPIKey.objects.filter(user=self, keytype__in=('Character', 'Account'))
+    def get_corporation_api_keys(self):
+        return UserAPIKey.objects.filter(user=self, keytype='Corporation')
     def get_pilots(self):
-        return UserPilot.objects.filter(user=self, apikey__in=self.get_api_keys())
+        return UserPilot.objects.filter(user=self, apikey__in=self.get_character_api_keys())
     def get_active_pilots(self):
         return UserPilot.objects.filter(user=self,
                 apikey__in=self.get_api_keys(),
                 activated=True).order_by('public_info__name')
+    def get_active_corporations(self):
+        pilots = self.get_active_pilots()
+        return UserCorporation.objects.filter(activated=True, pk__in=[pilot.corporation.pk for pilot in pilots])
+    def get_inactive_corporations(self):
+        pilots = self.get_active_pilots()
+        return UserCorporation.objects.filter(activated=False, pk__in=[pilot.corporation.pk for pilot in pilots])
     def fetch_character_names(self):
         characters = []
-        for apikey in self.get_api_keys():
+        for apikey in self.get_character_api_keys():
             result = private.get_account_characters(apikey.keyid,
                     apikey.verification_code)
             for character in result.characters:
@@ -39,7 +51,7 @@ class Capsuler(PybbProfile):
                         'id': character.characterID})
         return characters
     def find_apikey_for_pilot(self, characterid):
-        for apikey in self.get_api_keys():
+        for apikey in self.get_character_api_keys():
             result = private.get_account_characters(apikey.keyid,
                     apikey.verification_code)
             for character in result.characters:
@@ -55,25 +67,66 @@ class Capsuler(PybbProfile):
             apikey.delete()
 
 class UserAPIKey(models.Model):
+    KEY_TYPES = (
+            ('Account', 'Account'),
+            ('Character', 'Character'),
+            ('Corporation', 'Corporation'))
+    name = models.CharField(max_length=50)
     keyid = models.CharField(max_length=20)
     verification_code = models.CharField(max_length='128')
+    keytype = models.CharField(max_length=11, choices=KEY_TYPES)
+    accessmask = models.CharField(max_length=20)
+    expires = models.DateTimeField(null=True)
     user = models.ForeignKey(Capsuler)
     def pre_delete(self):
         pilots = UserPilots.objects.filter(user=self.user, apikey=self)
         for pilot in pilots:
             pilot.delete()
     def __unicode__(self):
-        return '%s: %s' % (self.user, self.keyid)
+        return self.name
+    def save(self, *args, **kwargs):
+        try:
+            kinfo = private.get_apikey_info(self.keyid, self.verification_code)
+            self.keytype = kinfo.key.type
+            self.accessmask = kinfo.key.accessMask
+            if type(kinfo.key.expires) is int:
+                self.expires = datetime.fromtimestamp(kinfo.key.expires)
+        except Exception, ex:
+            print format_exc(ex)
+            raise Exception('API key error')
+        super(UserAPIKey, self).save(*args, **kwargs)
+
     class Meta:
         permissions = (('use_apikey', 'Use API key'),)
 
 
+class UserCorporationManager(models.Manager):
+    def get_corporation_by_name(self, corporation_name):
+        try:
+            corporation = Corporation.objects.get_corporation(corporation_name)
+            return UserCorporation.objects.get(public_info=corporation)
+        except:
+            raise UserCorporation.DoesNotExist()
+    def get_active_member_corporations(self, user):
+        pilots = user.get_active_pilots()
+        return UserCorporation.objects.filter(activated=True,
+                corporation__in=[pilot.corporation for pilot in pilots])
 
 class UserCorporation(models.Model):
     id = models.IntegerField(primary_key=True)
     public_info = models.OneToOneField(Corporation)
+    activated = models.BooleanField(default=False)
+
+    objects = UserCorporationManager()
+
     def __unicode__(self):
         return self.public_info.name
+
+    def is_member(self, capsuler):
+        for pilot in capsuler.get_active_pilots():
+            if pilot.corporation == self:
+                return True
+        return False
 
 class UserPilotManager(models.Manager):
     def activate_pilot(self, capsuler, apikey, characterid):
@@ -158,6 +211,7 @@ class UserAPIKeyCache(models.Model):
     apikey = models.ForeignKey(UserAPIKey)
     pilot = models.ForeignKey(UserPilot, null=True)
     cache_time = models.DateTimeField()
+    fetch_time = models.DateTimeField(auto_now=True)
     function = models.CharField(max_length=50)
 
 class UserPilotPropertyManager(models.Manager):
@@ -308,36 +362,46 @@ class UserPilotAugmentor(models.Model):
     objects = UserPilotAugmentorManager()
 
 class AssetManager(models.Manager):
-    def update_from_api(self, assets, pilot):
-        itemid_list = [a.itemID for a in assets]
-        deleted_items = self.filter(owner=pilot).exclude(pk__in=itemid_list)
-        deleted_items.delete()
+    def update_from_api(self, assets, pilot, parent=None):
         for a in assets:
-            try:
-                aobj = self.get(pk=a.itemID, owner=pilot)
-            except Asset.DoesNotExist:
-                aobj = Asset(id=a.itemID, owner=pilot)
-            aobj.locationid = a.locationID
+            aobj = Asset(assetid=a.itemID, owner=pilot)
+            if hasattr(a, 'locationID'):
+                aobj.locationid = a.locationID
+            elif hasattr(parent, 'locationid'):
+                aobj.locationid = parent.locationid
+            else:
+                #TODO: logthis
+                continue
             aobj.quantity = a.quantity
-            aobj.flag = a.flag
             aobj.singleton = a.singleton
+            if parent:
+                aobj.parent=parent
             try:
                 aobj.itemtype = InvType.objects.get(pk=a.typeID)
             except:
+                #TODO: logthis
+                continue
+            try:
+                aobj.flag = InvFlag.objects.get(pk=a.flag)
+            except:
+                #TODO: logthis
                 continue
             aobj.save()
+            if hasattr(a, 'contents'):
+                self.update_from_api(a.contents, pilot, parent=aobj)
 
 
     def delete_pilot_assets(self, pilot):
         self.filter(owner=pilot).delete()
 
 class Asset(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    assetid = models.BigIntegerField()
     itemtype = models.ForeignKey(InvType)
     locationid = models.BigIntegerField(null=True)
     quantity = models.IntegerField()
-    flag = models.IntegerField()
+    flag = models.ForeignKey(InvFlag)
     singleton = models.BooleanField()
+    parent = models.ForeignKey('Asset', null=True, related_name='container')
     owner = models.ForeignKey(UserPilot)
 
     objects = AssetManager()
@@ -357,6 +421,8 @@ post_save.connect(create_capsuler_profile, sender=User)
 
 
 admin.site.register(Capsuler)
+admin.site.register(UserAPIKey)
+admin.site.register(UserCorporation)
 admin.site.register(UserPilot)
 admin.site.register(UserPilotProperty)
 admin.site.register(UserPilotSkill)

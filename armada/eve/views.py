@@ -24,9 +24,16 @@ class InvTypeJSON(JSONView):
     def dispatch(self, request, *args, **kwargs):
         return super(InvTypeJSON, self).dispatch(request, *args, **kwargs)
 
-def typeahead_invtype_name(request):
-    names = [invtype.typename for invtype in InvType.objects.filter(published=True, volume__gt=0.0)]
-    return HttpResponse(json.dumps(names))
+class Typeahead_InvType_name(View):
+    def get(self, request):
+        names = [invtype.typename for invtype in InvType.objects.filter(published=True, volume__gt=0.0)]
+        return HttpResponse(json.dumps(names))
+
+class Typeahead_Location_name(View):
+    def get(self, request):
+        names = [station.stationname for station in StaStation.objects.all()]
+        names += [outpost.name for outpost in ConquerableStation.objects.all()]
+        return HttpResponse(json.dumps(names))
 
 class ItemListView(TemplateResponseMixin, View):
     template_name='eve/item_list.html'

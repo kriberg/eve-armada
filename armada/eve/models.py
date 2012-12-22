@@ -300,6 +300,9 @@ class ConquerableStation(models.Model):
     def owner(self):
         return Corporation.objects.get_corporation(self.corporationid)
 
+    def __unicode__(self):
+        return self.name
+
 
 class TypeAttributesView(models.Model):
     attribute = models.ForeignKey(DgmAttributetype, primary_key=True, db_column='attributeid')

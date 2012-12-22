@@ -98,3 +98,9 @@ class SystemPriceView(TemplateResponseMixin, JSONView):
             text[itemprice.item.pk] = (itemprice.buy_maximum, itemprice.sell_minimum)
         return self.render_to_response({'json': self.json_encoder.encode(text)})
 
+def armada404(request):
+    return render_to_response('core/404.html',
+            {},
+            context_instance=RequestContext(request))
+def armada500(request):
+    return HttpResponse('500')

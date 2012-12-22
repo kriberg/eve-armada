@@ -13,6 +13,19 @@
             {{ apiformset.management_form }}
             {% for form in apiformset %}
                 {{ form|crispy }}
+                {% if form.instance.accessmask %}
+                <ul class="unstyled">
+                    <li>Expires: 
+                        {% if form.instance.expires %}
+                        {{ form.instance.expires }}
+                        {% else %}
+                        never
+                        {% endif %}
+                    </li>
+                    <li>Key type: {{ form.instance.keytype }}</li>
+                    <li>Access mask: {{ form.instance.accessmask }}</li>
+                </ul>
+                {% endif %}
             {% endfor %}
             <button type="submit" class="btn pull-right">Save</button>
         </form>

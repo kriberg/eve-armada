@@ -1,0 +1,15 @@
+{% extends 'core/nav.html' %}
+{% load eve_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ group.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        {{ stock }}
+    </div>
+</div>
+{% endblock %}
+

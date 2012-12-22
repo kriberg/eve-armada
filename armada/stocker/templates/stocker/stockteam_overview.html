@@ -1,0 +1,45 @@
+{% extends 'core/nav.html' %}
+{% load eve_tags %}
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ team.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span6">
+            <dl>
+                <dt>Manager</dt>
+                <dd>{{ team.manager }}</dd>
+                <dt>Members</dt>
+                {% for member in team.get_members %}
+                <dd>{{ member.pilot }}</dd>
+                {% endfor %}
+            </dl>
+        </div>
+    </div>
+    <div class="row">
+        <table class="table table-condensed table-bordered table-striped">
+            <thead>
+                <tr>
+                    <td>Group</td>
+                    <td>Location</td>
+                    <td>Division</td>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in team.get_groups %}
+                <tr>
+                    <td><a href="{{ group.get_absolute_url }}">{{ group.name }}</a></td>
+                    <td>{{ group.location }}</td>
+                    <td>{% if group.division %}{{ group.division }}{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+

@@ -30,6 +30,7 @@
             <div class="row">
                 <h3>Jita mineral index</h3>
                 <div class="span2">
+                    {% csrf_token %}
                     {% render_table mineral_table %}
                 </div>
             </div>
