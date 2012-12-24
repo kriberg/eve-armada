@@ -190,13 +190,21 @@ AUTH_PROFILE_MODULE = 'capsuler.Capsuler'
 # Celery
 import djcelery
 djcelery.setup_loader()
-BROKER_HOST = "localhost"
-BROKER_PORT = 5672
-BROKER_USER = "guest"
-BROKER_PASSWORD = "guest"
-BROKER_VHOST = "/"
+BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 CELERY_CONCURRENY = 50
 CELERY_DISABLE_RATE_LIMITS = True
+from celery.schedules import crontab
+CELERYBEAT_SCHEDULE = {
+        'alliance_list': {
+            'task': 'tasks.fetch_alliance_list',
+            'schedule': crontab(hour=12, minute=0),
+            },
+        'conquerable_stations': {
+            'task': 'tasks.fetch_conquerable_outposts',
+            'schedule': crontab(hour=12, minute=0),
+            },
+        }
 
 # PyBBm
 PYBB_TEMPLATE = 'core/nav.html'
