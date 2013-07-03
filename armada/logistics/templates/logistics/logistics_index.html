@@ -1,0 +1,66 @@
+{% extends 'core/nav.html' %}
+{% block content %}
+<div class="container" xmlns="http://www.w3.org/1999/html">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{corporation}} logistics</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span12">
+            <p>
+                Overview of corporation logistics teams.
+            </p>
+            {% if director %}
+            <p>
+                <a href="{% url "logisticsteam_create" corporation %}" class="btn">Create new team</a>
+            </p>
+            {% endif %}
+            <h3>Your teams</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>Name</td><td>Type</td><td>Pilot</td><td>Manage</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for membership in memberships %}
+                    <tr>
+                        <td>
+                            <a href="{{membership.team.get_page_link}}">{{ membership.team }}</a>
+                        </td>
+                        <td>
+                            {{ membership.team.get_team_type_display }}
+                        </td>
+                        <td>
+                            {{ membership.pilot }}
+                        </td>
+                        <td>
+                            {% if membership.manager %}
+                            <a href="{% url "logisticsteam_members" membership.team.corporation membership.team %}" class="btn btn-mini">Members</a>
+                            <a href="{% url "logisticsteam_details" membership.team.corporation membership.team %}" class="btn btn-mini">Change team</a>
+                            <a href="{% url "logisticsteam_delete" membership.team.corporation membership.team %}" class="btn btn-mini">Delete team</a>
+                            {% endif %}
+                            <a href="{% url "logisticsteammember_decline" membership.team.corporation membership.pk %}" class="btn btn-mini">Resign</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if invitations %}
+                    {% for invitation in invitations %}
+                    <tr>
+                        <td>{{ invitation.team }}</td>
+                        <td>{{ invitation.team.get_team_type_display }}</td>
+                        <td>{{ invitation.pilot }}</td>
+                        <td>Invitation from {{ invitation.god }}:
+                            <a href="{% url "logisticsteammember_accept" invitation.team.corporation invitation.pk %}" class="btn btn-mini">Accept</a>
+                            <a href="{% url "logisticsteammember_decline" invitation.team.corporation invitation.pk %}" class="btn btn-mini">Decline</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

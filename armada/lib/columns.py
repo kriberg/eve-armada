@@ -12,7 +12,7 @@ class SystemItemPriceColumn(tables.TemplateColumn):
         if 'system' in kwargs:
             template_code += str(kwargs['system'].pk)
         else:
-            template_code += '%d ' % self.system.pk
+            template_code += '%s ' % self.system.pk
         if 'record_accessor' in kwargs:
             template_code += 'record.%s %%}' % kwargs.pop('record_accessor')
         else:

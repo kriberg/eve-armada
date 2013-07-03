@@ -51,8 +51,7 @@ jQuery(document).ajaxSend(function(event, xhr, settings) {
  * Helper functions
  */
 var printisk = function (v) {
-    //return $.format.number(parseFloat(v), '#,##0.00#');
-    return v;
+    return $.format.number(parseFloat(v), '#,##0.00#');
 }
 
 /*

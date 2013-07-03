@@ -40,7 +40,7 @@ USE_I18N = True
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
 USE_L10N = True
-USE_THOUSAND_SEPARATOR = True
+USE_THOUSAND_SEPARATOR = False
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/media/"
@@ -99,7 +99,6 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.static",
     "django.contrib.messages.context_processors.messages",
     "django.core.context_processors.request",
-    "pybb.context_processors.processor",
 )
 
 MIDDLEWARE_CLASSES = (
@@ -109,7 +108,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'pybb.middleware.PybbMiddleware',
 )
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
@@ -139,15 +137,14 @@ INSTALLED_APPS = (
     'registration',
     'django_tables2',
     'djcelery',
-    'pybb',
-    'pytils',
-    'sorl.thumbnail',
+    #'sorl.thumbnail',
     'pure_pagination',
     'armada.tasks',
     'armada.core',
     'armada.eve',
     'armada.capsuler',
     'armada.corporation',
+    'armada.logistics',
     'armada.stocker',
 )
 
@@ -162,7 +159,8 @@ LOGGING = {
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
-            'class': 'django.utils.log.AdminEmailHandler'
+            'class': 'django.utils.log.AdminEmailHandler',
+            'filters': ['require_debug_false',]
         }
     },
     'loggers': {
@@ -171,6 +169,11 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+    },
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
     }
 }
 
@@ -198,18 +201,17 @@ from celery.schedules import crontab
 CELERYBEAT_SCHEDULE = {
         'alliance_list': {
             'task': 'tasks.fetch_alliance_list',
-            'schedule': crontab(hour=12, minute=0),
+            'schedule': crontab(hour=13, minute=0),
             },
         'conquerable_stations': {
             'task': 'tasks.fetch_conquerable_outposts',
-            'schedule': crontab(hour=12, minute=0),
+            'schedule': crontab(hour=13, minute=0),
             },
+        'character_sheets': {
+            'task': 'tasks.periodic_fetch_character_sheets',
+            'schedule': crontab(minute=42),
+            }
         }
-
-# PyBBm
-PYBB_TEMPLATE = 'core/nav.html'
-PYBB_MARKUP = 'markdown'
-PYBB_ENABLE_ANONYMOUS_POST = False
 
 try:
     from local_settings import *

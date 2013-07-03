@@ -11,12 +11,13 @@
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Capsulers<b class="caret"></b></a>
                             <ul class="dropdown-menu">
                                 {% for pilot in request.user.get_profile.get_active_pilots  %}
-                                <li class="nav-header">{{ pilot }}</li>
-                                <li><a href="/capsuler/pilots/{{ pilot }}">Character sheet</a></li>
-                                <li><a href="/capsuler/assets/{{ pilot }}">Assets</a></li>
-                                {% if not forloop.last %}
-                                <li class="divider"></li>
-                                {% endif %}
+                                <li class="dropdown-submenu">
+                                    <a tabindex="-1" href="#">{{ pilot }}</a>
+                                    <ul class="dropdown-menu">
+                                        <li><a href="/capsuler/pilots/{{ pilot }}">Character sheet</a></li>
+                                        <li><a href="/capsuler/assets/{{ pilot }}">Assets</a></li>
+                                    </ul>
+                                </li>
                                 {% endfor %}
                             </ul>
                         </li>
@@ -31,7 +32,7 @@
                                             <a href="{{ corporation.public_info.get_absolute_url }}">Public information</a>
                                         </li>
                                         <li>
-                                            <a href="{% url stocker_index %}">Stocker</a>
+                                            <a href="{% url "logistics_index" corporation.public_info.name %}">Logistics</a>
                                         </li>
                                     </ul>
                                 </li>

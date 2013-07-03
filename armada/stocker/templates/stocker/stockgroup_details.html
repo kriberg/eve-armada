@@ -8,36 +8,50 @@
         </div>
     </div>
     <div class="row">
-        <form class="form form-horizontal" method="post">
+        <p>
+            A stock group contains the items you want indexed at the defined
+            location.  You can also set the low and critical levels to
+            highlight the item in the overview.
+        </p>
+        <form class="form" method="post">
             {% csrf_token %}
-            {{ itemformset.management_form }}
-            <table class="table table-condensed table-bordered table-striped" id="stockgroupitem-table">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Low level</th>
-                        <th>Critical level</th>
-                        <th>Remove</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for form in itemformset %}
-                    {{ form.id }}
-                    <tr class="{% cycle 'odd' 'even' %}">
-                        <td>{{ form.item_name }}{{ form.item_name.errors }}</td>
-                        <td>{{ form.low_level }}{{ form.low_level.errors }}</td>
-                        <td>{{ form.critical_level }}{{ form.critical_level.errors }}</td>
-                        <td>{{ form.DELETE }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="btn-group pull-right">
-                <a href="{{ group.get_absolute_url }}" class="btn">View group</a>
-                <a href="{{ team.get_absolute_url }}" class="btn">Cancel</a>
-                <button type="submit" class="btn">Update</button>
+            <div class="row">
+                <div class="span6">
+                    {{ stockgroupform }}
+                </div>
             </div>
-        </form>
+            <div class="row">
+                <div class="span8">
+                    {{ itemformset.management_form }}
+                    <table class="table table-condensed table-bordered table-striped" id="stockgroup_table">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Low level</th>
+                                <th>Critical level</th>
+                                <th>Remove</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in itemformset %}
+                            {{ form.id }}
+                            <tr class="{% cycle 'odd' 'even' %}">
+                                <td>{{ form.item_name }}{{ form.item_name.errors }}</td>
+                                <td>{{ form.low_level }}{{ form.low_level.errors }}</td>
+                                <td>{{ form.critical_level }}{{ form.critical_level.errors }}</td>
+                                <td>{{ form.DELETE }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="btn-group pull-right">
+                        <a href="{% url "stockgroup_view" team.corporation team.name group.name %}" class="btn">View group</a>
+                        <a href="{% url "stockteam_overview" team.corporation team.name %}" class="btn">Cancel</a>
+                        <button type="submit" class="btn">Save</button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 <script type="text/javascript">

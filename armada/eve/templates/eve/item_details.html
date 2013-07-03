@@ -16,7 +16,9 @@
             {% invtype_icon item 64 %}
         </div>
         <div class="span5">
-        {{ item.description|safe }}
+            <p>
+                {{ item.description|safe|linebreaks }}
+            </p>
         </div>
     </div>
     <div class="row">

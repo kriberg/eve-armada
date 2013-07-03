@@ -21,14 +21,14 @@
                 <tbody>
                     {% for pilot in activated %}
                     <tr>
-                        <td>{{ pilot.public_info.name }}</td>
-                        <td><a href="/capsuler/pilots/deactivate/{{ pilot.id }}" class="btn">Deactivate</a></td>
+                        <td><a href="{% url "capsuler_pilot_details" pilot %}">{{ pilot.public_info.name }}</a></td>
+                        <td><a href="{% url "capsuler_deactivate_pilot" pilot.id %}" class="btn">Deactivate</a></td>
                     </tr>
                     {% endfor %}
                     {% for pilot in unactivated %}
                     <tr>
                         <td>{{ pilot.name }}</td>
-                        <td><a href="/capsuler/pilots/activate/{{ pilot.id }}" class="btn">Activate</a></td>
+                        <td><a href="{% url "capsuler_activate_pilot" pilot.id %}" class="btn">Activate</a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

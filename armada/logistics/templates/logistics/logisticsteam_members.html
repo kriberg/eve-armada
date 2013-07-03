@@ -1,0 +1,24 @@
+{% extends 'core/nav.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>{{ team.corporation }} - {{ team.name }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="span6">
+            <h3>Members</h3>
+            <form class="form form-horizontal span6" method="post">
+                {% csrf_token %}
+                {{ memberformset.management_form }}
+                {{ memberformset|crispy }}
+                <button type="submit" class="btn pull-right">Update</button>
+                <a href="{% url "logistics_index" team.corporation %}" class="btn pull-right">Back to overview</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+

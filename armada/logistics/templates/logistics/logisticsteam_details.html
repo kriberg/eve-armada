@@ -9,13 +9,14 @@
     </div>
     <div class="row">
         <div class="span6">
-            <form class="form form-horizontal span6" method="post" action="{% url stockteam_update team.pk %}">
+            <h3>Details</h3>
+            <form class="form form-horizontal span6" method="post" action="{% url "logisticsteam_details" team.corporation team.name %}">
                 {% csrf_token %}
-                {{ stockteamform|crispy }}
+                {{ logisticsteamform|crispy }}
                 <button type="submit" class="btn pull-right">Update team</button>
-                <a href="{{ team.get_absolute_url }}" class="btn pull-right">Cancel</a>
+                <a href="{% url "logistics_index" team.corporation %}" class="btn pull-right">Back to overview</a>
             </form>
         </div>
-    </div
+    </div>
 </div>
-{% endblock %}
+{% endblock content %}

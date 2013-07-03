@@ -12,9 +12,9 @@ from armada.lib.views import JSONView
 from armada.lib.columns import SystemItemPriceColumn, \
         ItemColumn
 from armada.core.models import *
-from armada.capsuler.models import UserPilot
+from armada.capsuler.models import UserPilot, UserAPIKey
 from armada.eve.ccpmodels import MapSolarsystem, \
-        InvMarketgroup, \
+        InvGroup, \
         InvType
 from armada.lib.evecentral import EveCentral
 from celery.execute import send_task
@@ -41,17 +41,23 @@ class ArmadaView(TemplateResponseMixin, View):
     template_name = 'core/index.html'
 
     def get(self, request):
-        minerals = InvType.objects.filter(group=InvMarketgroup.objects.get(marketgroupname='Minerals')).order_by('pk').exclude(typename='Chalcopyrite')
+        minerals = InvType.objects.filter(group=InvGroup.objects.get(groupname='Mineral')).order_by('pk').exclude(typename='Chalcopyrite')
         mineral_table = MineralTable(minerals)
         if request.user.is_authenticated():
             pilot_list = PilotListSubview().enqueue(request, (request.user.pk,), expires=60)
+            num_keys = UserAPIKey.objects.filter(user=request.user.get_profile()).count()
+            num_pilots = UserPilot.objects.filter(user=request.user.get_profile(),
+                    activated=True).count()
         else:
             pilot_list = ''
-
+            num_keys = None
+            num_pilots = None
 
         return self.render_to_response({
             'mineral_table': mineral_table,
             'pilot_list': pilot_list,
+            'num_keys': num_keys,
+            'num_pilots': num_pilots,
             })
 
 

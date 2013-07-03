@@ -8,6 +8,9 @@
         </div>
     </div>
     <div class="row">
+        <p>To use the functionality of Armada you need to add API keys for your pilots.
+            After adding keys, you may activate as many of your pilots as like by clicking Pilots 
+            on the account menu in the upper right corner.</p>
         <form class="form form-horizontal span6" method="post">
             {% csrf_token %}
             {{ apiformset.management_form }}

@@ -74,11 +74,10 @@ class EveCentral():
                 system=system,
                 timestamp__gte=datetime.now()-timedelta(hours=1))
         new_pots = items.exclude(pk__in=[i.pk for i in fresh_pots])
-        print len(fresh_pots), len(new_pots), len(items)
         all_pots = [item for item in fresh_pots] + [item for item in new_pots]
 
 
-        print 'Fetching %d items for system %s' % (len(all_pots), system.solarsystemname)
+        #print 'Fetching %d items for system %s' % (len(all_pots), system.solarsystemname)
         for block in [all_pots[i:i+64] for i in range(0, len(all_pots), 64)]:
             parameters = []
             for item in block:
@@ -86,9 +85,7 @@ class EveCentral():
             parameters.append('usesystem=%d' % system.pk)
             try:
                 soup = self._request(parameters)
-                print 'Block done'
             except Exception, ex:
-                print format_exc(ex)
                 continue
             for itemsoup in soup.findAll('type'):
                 bvol = itemsoup.find('buy').find('volume').renderContents()

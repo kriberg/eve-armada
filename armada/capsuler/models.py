@@ -8,8 +8,6 @@ from django.db.models import Sum
 from datetime import datetime
 from traceback import format_exc
 
-from pybb.models import PybbProfile
-
 from armada.eve.models import Corporation, \
         Character
 from armada.eve.ccpmodels import InvType, \
@@ -20,27 +18,57 @@ from armada.lib.api import private
 from armada.lib.evemodels import get_location_name
 
 
-class Capsuler(PybbProfile):
+class Capsuler(models.Model):
     user = models.OneToOneField(User)
 
     def get_api_keys(self):
         return UserAPIKey.objects.filter(user=self)
+
     def get_character_api_keys(self):
         return UserAPIKey.objects.filter(user=self, keytype__in=('Character', 'Account'))
+
     def get_corporation_api_keys(self):
         return UserAPIKey.objects.filter(user=self, keytype='Corporation')
+
     def get_pilots(self):
         return UserPilot.objects.filter(user=self, apikey__in=self.get_character_api_keys())
+
+    def get_pilots_in_corporation(self, corporation):
+        return UserPilot.objects.filter(user=self,
+                corporation=corporation, activated=True)
+
     def get_active_pilots(self):
         return UserPilot.objects.filter(user=self,
                 apikey__in=self.get_api_keys(),
                 activated=True).order_by('public_info__name')
+
     def get_active_corporations(self):
         pilots = self.get_active_pilots()
         return UserCorporation.objects.filter(activated=True, pk__in=[pilot.corporation.pk for pilot in pilots])
+
+    def has_director_access(self, corporation):
+        if type(corporation) == UserCorporation:
+            corporation_name = corporation.public_info.name
+        else:
+            corporation_name = corporation
+        for key in self.get_corporation_api_keys():
+            if corporation_name == key.get_corporation().name:
+                return True
+        return False
+
+    def has_member_in_active_corporation(self, corporation_name):
+        pilots = self.get_active_pilots()
+        if UserCorporation.objects.filter(activated=True,
+                public_info__name=corporation_name,
+                pk__in=[pilot.corporation.pk for pilot in pilots]).count() > 0:
+            return True
+        else:
+            return False
+
     def get_inactive_corporations(self):
         pilots = self.get_active_pilots()
         return UserCorporation.objects.filter(activated=False, pk__in=[pilot.corporation.pk for pilot in pilots])
+
     def fetch_character_names(self):
         characters = []
         for apikey in self.get_character_api_keys():
@@ -50,7 +78,8 @@ class Capsuler(PybbProfile):
                 characters.append({'name': character.name,
                         'id': character.characterID})
         return characters
-    def find_apikey_for_pilot(self, characterid):
+
+    def find_api_key_for_pilot(self, characterid):
         for apikey in self.get_character_api_keys():
             result = private.get_account_characters(apikey.keyid,
                     apikey.verification_code)
@@ -58,13 +87,29 @@ class Capsuler(PybbProfile):
                 if str(character.characterID) == str(characterid):
                     return apikey
         raise Exception('No matching apikey for selected character is availble.')
+
+    def find_api_keys_for_corporation(self, corporation):
+        if type(corporation) == UserCorporation:
+            corporation = UserCorporation.public_info
+        elif type(corporation) == unicode or type(corporation) == str:
+            corporation = Corporation.objects.get_corporation(corporation)
+
+        valid_keys = []
+        for key in self.get_corporation_api_keys():
+            if key.get_corporation() == corporation:
+                valid_keys.append(key)
+        return UserAPIKey.objects.filter(user=self,
+                pk__in=[k.pk for k in valid_keys])
+
     def __unicode__(self):
         return self.user.username
+
     def pre_delete(self):
         for pilot in self.get_pilots():
             pilot.delete()
         for apikey in self.get_api_keys():
             apikey.delete()
+
 
 class UserAPIKey(models.Model):
     KEY_TYPES = (
@@ -74,27 +119,39 @@ class UserAPIKey(models.Model):
     name = models.CharField(max_length=50)
     keyid = models.CharField(max_length=20)
     verification_code = models.CharField(max_length='128')
-    keytype = models.CharField(max_length=11, choices=KEY_TYPES)
-    accessmask = models.CharField(max_length=20)
-    expires = models.DateTimeField(null=True)
+    keytype = models.CharField(max_length=11, choices=KEY_TYPES, editable=False)
+    accessmask = models.CharField(max_length=20, editable=False)
+    expires = models.DateTimeField(null=True, editable=False)
     user = models.ForeignKey(Capsuler)
+
     def pre_delete(self):
         pilots = UserPilots.objects.filter(user=self.user, apikey=self)
         for pilot in pilots:
             pilot.delete()
+
     def __unicode__(self):
         return self.name
-    def save(self, *args, **kwargs):
+
+    def get_characters(self):
+        if self.keytype == 'Corporation':
+            return []
+        characters = []
+        result = private.get_account_characters(apikey.keyid,
+                apikey.verification_code)
+        for character in result.characters:
+            characters.append({'name': character.name,
+                    'id': character.characterID})
+        return characters
+
+    def get_corporation(self):
+        if not self.keytype == 'Corporation':
+            return None
         try:
-            kinfo = private.get_apikey_info(self.keyid, self.verification_code)
-            self.keytype = kinfo.key.type
-            self.accessmask = kinfo.key.accessMask
-            if type(kinfo.key.expires) is int:
-                self.expires = datetime.fromtimestamp(kinfo.key.expires)
-        except Exception, ex:
-            print format_exc(ex)
-            raise Exception('API key error')
-        super(UserAPIKey, self).save(*args, **kwargs)
+            result = private.get_corporation_sheet(self.keyid,
+                    self.verification_code)
+        except:
+            return None
+        return Corporation.objects.get_corporation(result.corporationID)
 
     class Meta:
         permissions = (('use_apikey', 'Use API key'),)
@@ -127,6 +184,23 @@ class UserCorporation(models.Model):
             if pilot.corporation == self:
                 return True
         return False
+
+    def is_director(self, capsuler):
+        return capsuler.has_director_access(self)
+
+    def get_active_capsulers(self):
+        capsuler_pks = [pilot.user.pk for pilot in UserPilot.objects.filter(activated=True, corporation=self)]
+        return Capsuler.objects.filter(pk__in=capsuler_pks)
+
+    def get_active_directors(self):
+        # This is a really slow manner to find directors
+        directors = []
+        for capsuler in self.get_active_capsulers():
+            if self.is_director(capsuler):
+                directors.append(capsuler)
+        return directors
+
+
 
 class UserPilotManager(models.Manager):
     def activate_pilot(self, capsuler, apikey, characterid):
@@ -189,7 +263,11 @@ class UserPilot(models.Model):
         groups = {}
         group_names = set([skill.skill.marketgroup.marketgroupname for skill in UserPilotSkill.objects.filter(pilot=self).order_by('skill__marketgroup__marketgroupname')])
         for name in group_names:
-            groups[name] = UserPilotSkill.objects.filter(pilot=self, skill__marketgroup__marketgroupname=name).order_by('skill__typename')
+            group_skills = UserPilotSkill.objects.filter(pilot=self, skill__marketgroup__marketgroupname=name).order_by('skill__typename')
+            groups[name] = {'name': name,
+                    'skills': group_skills,
+                    'count': group_skills.count(),
+                    'skillpoints': group_skills.aggregate(Sum('points'))['points__sum']}
         return groups
     def get_skill_points(self):
         try:
@@ -198,8 +276,18 @@ class UserPilot(models.Model):
             return 'N/A'
     def get_skill_count(self):
         return UserPilotSkill.objects.filter(pilot=self).count()
+    def get_skills_in_group_count(self, group):
+        UserPilotSkill.object.filter(pilot=self, skill__marketgroup__marketgroupname=group).count()
     def get_skill_at_l5_count(self):
         return UserPilotSkill.objects.filter(pilot=self, level=5).count()
+    def corporation_change(self, old_corp, new_corp):
+        # Whenever a pilot changes corporation, we have to drop
+        # roles in armada. We'll be aggressive with removing rights
+
+        # Removing logi access
+        LogisticsTeamMember.objects.filter(pilot=self).delete()
+
+        #TODO: some notification
 
     @models.permalink
     def get_absolute_url(self):
@@ -288,6 +376,9 @@ class UserPilotSkill(models.Model):
             return int(DgmTypeattribute.objects.get(type=self.skill, attribute=275).valuefloat)
         except:
             return 'N/A'
+    def get_skill_points_for_level_5(self):
+        # base_points = {1: 250, 2: 1415, 3: 8000, 4: 45255, 5: 256000}
+        return 256000*self.get_rank()
 
 class UserPilotCertificateManager(models.Manager):
     def update_pilot_from_api(self, pilot, apidata):
@@ -362,9 +453,12 @@ class UserPilotAugmentor(models.Model):
     objects = UserPilotAugmentorManager()
 
 class AssetManager(models.Manager):
-    def update_from_api(self, assets, pilot, parent=None):
+    def update_from_api(self, assets, key, pilot=None, corporation=None, parent=None):
         for a in assets:
-            aobj = Asset(assetid=a.itemID, owner=pilot)
+            aobj = Asset(assetid=a.itemID,
+                    pilot=pilot,
+                    corporation=corporation,
+                    key=key)
             if hasattr(a, 'locationID'):
                 aobj.locationid = a.locationID
             elif hasattr(parent, 'locationid'):
@@ -388,11 +482,14 @@ class AssetManager(models.Manager):
                 continue
             aobj.save()
             if hasattr(a, 'contents'):
-                self.update_from_api(a.contents, pilot, parent=aobj)
+                self.update_from_api(a.contents, key, pilot=pilot, corporation=corporation, parent=aobj)
 
+    def delete_pilot_assets(self, pilot, apikey):
+        self.filter(pilot=pilot, key=apikey).delete()
 
-    def delete_pilot_assets(self, pilot):
-        self.filter(owner=pilot).delete()
+    def delete_corporation_assets(self, corporation, apikey):
+        self.filter(corporation=corporation, key=apikey).delete()
+
 
 class Asset(models.Model):
     assetid = models.BigIntegerField()
@@ -402,7 +499,9 @@ class Asset(models.Model):
     flag = models.ForeignKey(InvFlag)
     singleton = models.BooleanField()
     parent = models.ForeignKey('Asset', null=True, related_name='container')
-    owner = models.ForeignKey(UserPilot)
+    pilot = models.ForeignKey(UserPilot, null=True)
+    corporation = models.ForeignKey(UserCorporation, null=True)
+    key = models.ForeignKey(UserAPIKey)
 
     objects = AssetManager()
 
@@ -411,14 +510,10 @@ class Asset(models.Model):
         return get_location_name(self.locationid)
 
 
-
-
 def create_capsuler_profile(sender, instance, created, **kwargs):
     if created:
         Capsuler.objects.create(user=instance)
 post_save.connect(create_capsuler_profile, sender=User)
-
-
 
 admin.site.register(Capsuler)
 admin.site.register(UserAPIKey)

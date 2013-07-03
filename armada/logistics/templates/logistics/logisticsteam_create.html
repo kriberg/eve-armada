@@ -4,15 +4,15 @@
 <div class="container">
     <div class="row">
         <div class="page-header">
-            <h1>Create stock team</h1>
+            <h1>Create logistics team</h1>
         </div>
     </div>
     <div class="row">
         <form class="form form-horizontal span6" method="post">
             {% csrf_token %}
-            {{ stockteamform|crispy }}
+            {{ logisticsteamform|crispy }}
             <button type="submit" class="btn pull-right">Create team</button>
-            <a href="{% url stocker_index %}" class="btn pull-right">Cancel</a>
+            <a href="{% url "logistics_index" corporation %}" class="btn pull-right">Cancel</a>
         </form>
     </div>
 </div>

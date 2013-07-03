@@ -18,12 +18,13 @@
                 <tr>
                     <td class="span4">{% invtype_icon item.item 32 %} {{ item.item }}</td>
                     <td class="number">
-                        {% if item.get_level == 2 %}
-                        <span class="critical">{{ item.get_amount|intcomma }}</span>
-                        {% elif item.get_level == 1 %}
-                        <span class="warning">{{ item.get_amount|intcomma }}</span>
-                        {% else %}
                         {{ item.get_amount|intcomma }}
+                    </td>
+                    <td style="padding-left: 1em;">
+                        {% if item.get_level == 2 %}
+                        <span class="label label-important">Critical</span>
+                        {% elif item.get_level == 1 %}
+                        <span class="label label-warning">Low</span>
                         {% endif %}
                     </td>
                 </tr>

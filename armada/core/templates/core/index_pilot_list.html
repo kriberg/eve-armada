@@ -14,15 +14,13 @@
                         {% if pilot.public_info.allianceid %}
                         <li>[<a href="{{ pilot.public_info.alliance.get_absolute_url }}">{{ pilot.public_info.alliance }}</a>]</li>
                         {% endif %}
-                        <li><span class="isk">{% pilot_property pilot 'balance' %}</span></li>
+                        <li>{% pilot_property pilot 'balance' %}</li>
                     </ul>
                 </div>
             </div>
             {% endfor %}
-            <script type="text/javascript">init_isk_span();</script>
             {% else %}
             <div class="row">
-                <p>No pilots activated.</p>
             </div>
             {% endif %}
 

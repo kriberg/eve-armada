@@ -12,6 +12,18 @@
     </div>
     <div class="row">
         <div class="span8">
+            {% if request.user.is_authenticated %}
+            {% if not num_keys %}
+            To activate your pilots, you need to add their API keys. You
+            can do that in the account menu available by pressing your
+            account name in the upper right corner.
+            {% endif%}
+            {% if not num_pilots and num_keys %}
+            You have no pilots activated. You can activate from the account
+            menu available by pressing your account name in the upper right
+            corner.
+            {% endif %}
+            {% endif %}
             <blockquote>
                 <p>OMG!RI just sperged all over myself when I found EVE Armada!</p>
                 <small>Fake corp CEO</small>

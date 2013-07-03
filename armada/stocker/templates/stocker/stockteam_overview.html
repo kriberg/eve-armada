@@ -1,5 +1,6 @@
 {% extends 'core/nav.html' %}
 {% load eve_tags %}
+{% load crispy_forms_tags %}
 {% block content %}
 
 <div class="container">
@@ -10,35 +11,94 @@
     </div>
     <div class="row">
         <div class="span6">
+            <p>
+                A stocker team consists of stock groups that keep track of certain items
+                at specific locations. 
+            </p>
             <dl>
-                <dt>Manager</dt>
-                <dd>{{ team.manager }}</dd>
                 <dt>Members</dt>
                 {% for member in team.get_members %}
-                <dd>{{ member.pilot }}</dd>
+                <dd>
+                    {{ member.pilot }}
+                    {% ifequal team.creator member.pilot %}
+                    (creator)
+                    {% else %}
+                        {% if member.manager %}
+                        (manager)
+                        {% endif %}
+                    {% endifequal %}
+                </dd>
                 {% endfor %}
             </dl>
+            
+
         </div>
     </div>
+    {% if creator or manager %}
     <div class="row">
-        <table class="table table-condensed table-bordered table-striped">
-            <thead>
-                <tr>
-                    <td>Group</td>
-                    <td>Location</td>
-                    <td>Division</td>
-                </tr>
-            </thead>
-            <tbody>
-                {% for group in team.get_groups %}
-                <tr>
-                    <td><a href="{{ group.get_absolute_url }}">{{ group.name }}</a></td>
-                    <td>{{ group.location }}</td>
-                    <td>{% if group.division %}{{ group.division }}{% endif %}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% if creator %}
+        <div class="well span5">
+            <strong>Creator access</strong>
+            <p>
+                As the creator of this team, you will have to bind one of
+                your API keys to this team for it to function. It must be a
+                corporation key able to pull assets. After setting the key
+                to use, you can add new groups of items to start tracking
+                the inventory levels. Be careful though, ALL managers will
+                be able to create groups checking contents in hangars your
+                key has access to.
+            </p>
+            <form class="form form-horizontal" method="post">
+                {% csrf_token %}
+                {{ settingsform|crispy }}
+                <button type="submit" class="btn">Change API key</button>
+            </form>
+        </div>
+        {% endif %}
+        {% if manager %}
+        <div class="well span5">
+            <strong>Manager access</strong>
+            <p>
+                You got manager access to this team and can create stock
+                groups which will keep track of items at a given location.
+                All members of this team will be able to see the stock
+                groups.
+            </p>
+            <a href="{% url "stockgroup_create" team.corporation team.name %}" class="btn">Create group</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="span12">
+            <table class="table table-condensed table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <td>Group</td>
+                        <td>Location</td>
+                        <td>Division</td>
+                        {% if manager or creator %}
+                        <td>Manage</td>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                    <tr>
+                        <td><a href="{{ group.get_absolute_url }}">{{ group.name }}</a></td>
+                        <td>{{ group.location }}</td>
+                        <td>{% if group.division %}{{ group.division }}{% endif %}</td>
+                        {% if manager or creator %}
+                        <td>
+                            <a href="{% url "stockgroup_details" team.corporation team.name group.name %}" class="btn btn-mini">Edit group</a>
+                            <a href="{% url "stockgroup_delete" team.corporation team.name group.name %}" class="btn btn-mini">Delete group</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 {% endblock %}

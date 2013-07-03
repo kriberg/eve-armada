@@ -12,7 +12,7 @@
             {% csrf_token %}
             {{ stockgroupform|crispy }}
             <button type="submit" class="btn pull-right">Create group</button>
-            <a href="{{ team.get_absolute_url }}" class="btn pull-right">Cancel</a>
+            <a href="{{ team.get_page_link }}" class="btn pull-right">Cancel</a>
         </form>
     </div>
 </div>

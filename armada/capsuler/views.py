@@ -17,14 +17,13 @@ from armada.lib.columns import SystemItemPriceColumn, \
 from armada.capsuler.models import *
 from armada.tasks.dispatcher import *
 from armada.tasks.views import *
+from armada.capsuler.forms import UserAPIKeyFormSet, UserAPIKeyForm
 
 
 class APIView(TemplateResponseMixin, View):
     template_name = 'capsuler/api.html'
-    UserAPIKeyFormSet = modelformset_factory(UserAPIKey,
-            exclude=('user', 'keytype', 'accessmask', 'expires'),
-            extra=1,
-            can_delete=True)
+    UserAPIKeyFormSet = modelformset_factory(UserAPIKey, form=UserAPIKeyForm,
+            extra=1, can_delete=True, formset=UserAPIKeyFormSet)
 
     def build_content(self, request):
         apikeys = request.user.get_profile().get_api_keys()
@@ -40,7 +39,12 @@ class APIView(TemplateResponseMixin, View):
         if apiformset.is_valid():
             apikeys = apiformset.save(commit=False)
             for apikey in apikeys:
+                kinfo = apiformset.keydata[apikey.keyid]
                 apikey.user = request.user.get_profile()
+                apikey.keytype = kinfo['keytype']
+                apikey.accessmask = kinfo['accessmask']
+                if type(kinfo['expires']) is int:
+                    apikey.expires = datetime.fromtimestamp(kinfo['expires'])
                 apikey.save()
         else:
             return self.render_to_response({
@@ -69,7 +73,7 @@ class PilotListView(TemplateResponseMixin, View):
         #TODO: deactivate pilots
         deactivated_pilots = []
         for characterid in activated_pilots:
-            apikey = request.user.get_profile().find_apikey_for_pilot(characterid)
+            apikey = request.user.get_profile().find_api_key_for_pilot(characterid)
             try:
                 pilot = UserPilot.objects.get(id=characterid,
                         user=request.user.get_profile(),
@@ -84,7 +88,7 @@ class PilotListView(TemplateResponseMixin, View):
 
 class PilotActivateView(View):
     def get(self, request, characterid):
-        apikey = request.user.get_profile().find_apikey_for_pilot(characterid)
+        apikey = request.user.get_profile().find_api_key_for_pilot(characterid)
         handler = UserPilot.objects.activate_pilot(request.user.get_profile(),
                 apikey,
                 characterid)
@@ -134,23 +138,29 @@ class AssetTable(tables.Table):
     locationid = LocationColumn(verbose_name='Location')
     jitaprice = SystemItemPriceColumn(verbose_name='Jita Value', record_accessor='itemtype')
     template_name = 'core/armada_table.html'
+
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         order_by = ('location', 'itemtype__typename')
         orderable = True
+
+
 class AssetSubview(Subview):
     template_name = 'capsuler/pilot_assets_assetlist.html'
     task_name = 'tasks.fetch_character_assets'
     sub_url = '/capsuler/tasks/assetlist/'
+
     def build_context(self, request, params):
         pilot = get_object_or_404(UserPilot,
                 public_info__name=params['pilotname'],
                 user=request.user.get_profile(),
                 activated=True)
-        assets = Asset.objects.filter(owner=pilot).order_by('locationid', 'itemtype__typename')
+        assets = Asset.objects.filter(pilot=pilot, key=pilot.apikey).order_by('locationid', 'itemtype__typename')
         assets_table = AssetTable(assets)
         tables.RequestConfig(request, paginate={'per_page': 100}).configure(assets_table)
         return {'assets_table': assets_table}
+
+
 class PilotAssetsView(TemplateResponseMixin, View):
     template_name = 'capsuler/pilot_assets.html'
 

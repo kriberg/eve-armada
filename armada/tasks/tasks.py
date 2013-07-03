@@ -7,6 +7,7 @@ from datetime import datetime
 from traceback import format_exc
 
 from celery.task import task
+from celery import group
 #
 # Tasks
 #
@@ -57,6 +58,18 @@ def fetch_character_sheet(capsuler_id):
             cache.cache_time = datetime.now()
         cache.save()
 
+        try:
+            ucorp = UserCorporation.objects.get(pk=apidata.corporationID)
+        except UserCorporation.DoesNotExist:
+            ucorp = UserCorporation(id=apidata.corporationID,
+                    public_info=Corporation.objects.get_corporation(apidata.corporationID))
+            ucorp.save()
+        if ucorp != pilot.corporation:
+            pilot.corporation_change(pilot.corporation, ucorp)
+            pilot.corporation = ucorp
+
+        pilot.public_info = Character.objects.get_character(apidata.characterID)
+
         pilot.date_of_birth = datetime.fromtimestamp(apidata.DoB)
         fetch_character_sheet.update_state(state='PROGRESS',
                 meta={'pilot': pilot.public_info.name, 'total': count, 'step': 'Parsing character sheet',
@@ -105,8 +118,8 @@ def fetch_character_assets(pilot_id):
 #   fetch_character_assets.update_state(state='PROGRESS',
 #           meta={'pilot': pilot.public_info.name, 'step': 'Parsing asset list', 'state': 'PROGRESS'})
 
-    Asset.objects.delete_pilot_assets(pilot)
-    Asset.objects.update_from_api(apidata.assets, pilot)
+    Asset.objects.delete_pilot_assets(pilot, pilot.apikey)
+    Asset.objects.update_from_api(apidata.assets, pilot.apikey, pilot=pilot)
 #   fetch_character_assets.update_state(state='SUCCESS',
 #           meta={'pilot': pilot.public_info.name, 'step': 'Completed', 'state': 'SUCCESS'})
 
@@ -145,8 +158,8 @@ def fetch_corporate_assets(apikey_id, user_corp_id):
 #   fetch_character_assets.update_state(state='PROGRESS',
 #           meta={'corporation': user_corporation.public_info.name, 'step': 'Parsing asset list', 'state': 'PROGRESS'})
 
-    CorporationAsset.objects.delete_assets(apikey, user_corporation)
-    CorporationAsset.objects.update_from_api(apidata.assets, apikey, user_corporation)
+    Asset.objects.delete_corporation_assets(user_corporation, apikey)
+    Asset.objects.update_from_api(apidata.assets, apikey, corporation=user_corporation)
 #   fetch_character_assets.update_state(state='SUCCESS',
 #           meta={'corporation': user_corporation.public_info.name, 'step': 'Completed', 'state': 'SUCCESS'})
 
@@ -185,8 +198,11 @@ def fetch_alliance_list():
                 am.start_date = datetime.fromtimestamp(member.startDate)
                 am.valid = True
                 am.save()
-        #TODO: print 'Added %s with %d member corps' % (a.name, len(arow.memberCorporations))
-    print 'Alliance list processed'
+    active = Alliance.objects.filter(status='Active')
+    dissolved = Alliance.objects.filter(status='Dissolved')
+    removed = dissolved.count()
+    dissolved.delete()
+    print 'Alliance list processed. %d active alliances, %d alliances dissolved.' % (active.count(), removed)
 
 @task(name='tasks.fetch_conquerable_outposts', expires=3600)
 def fetch_conquerable_outposts():
@@ -205,9 +221,14 @@ def fetch_conquerable_outposts():
             station.stationtype = InvType.objects.get(pk=outpost.stationTypeID)
             station.name = outpost.stationName
             station.save()
-            #TODO: print '%s owned by %s at %s' % (station.name, station.owner, station.solarsystem)
         except Exception, e:
             print 'Could not save station %d' % outpost.stationID
             print format_exc(e)
             pass
     print 'Outpost list processed'
+
+@task(name='tasks.periodic_fetch_character_sheets', expires=3600)
+def periodic_fetch_character_sheets(ignore_results=True):
+    capsulers = Capsuler.objects.all()
+    print 'Processing %d capsulers' % capsulers.count()
+    results = group(fetch_character_sheet(c.pk) for c in capsulers).apply_async()

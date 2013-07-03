@@ -18,3 +18,8 @@ def get_corporate_asset_list(keyID, vCode):
 def get_apikey_info(keyID, vCode):
     return get_list('account', 'APIKeyInfo',
             keyID=keyID, vCode=vCode)
+
+def get_corporation_sheet(keyID, vCode):
+    return get_list('corp', 'CorporationSheet',
+            keyID=keyID, vCode=vCode)
+

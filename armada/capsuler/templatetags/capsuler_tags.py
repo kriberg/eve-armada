@@ -5,11 +5,17 @@ from armada.capsuler.models import UserPilot
 
 @register.simple_tag()
 def pilot_property(pilot, key):
-    return pilot.get_property(key)
+    value = pilot.get_property(key)
+    if key == 'balance':
+        return "{:,}".format(float(value))
+    elif key == 'cloneSkillPoints':
+        return "{:,}".format(int(value))
+    else:
+        return value
 
 @register.simple_tag()
 def skill_level_image(level):
-    return '<img src="/static/core/img/desc-browser-level%d.png" alt="skill level %d" />' % (level, level)
+    return '<img src="/static/core/img/skill-level%d.png" alt="skill level %d" />' % (level, level)
 
 @register.simple_tag()
 def skill_indicator_image(level):

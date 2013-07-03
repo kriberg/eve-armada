@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 from django.contrib.auth.decorators import login_required
 
 from armada.capsuler.views import APIView, \
@@ -9,7 +9,6 @@ from armada.capsuler.views import APIView, \
         PilotDetailsSubview, \
         PilotAssetsView, \
         AssetSubview
-
 
 urlpatterns = patterns('',
         url(r'^api/$', login_required(APIView.as_view()), name='capsuler_api'),

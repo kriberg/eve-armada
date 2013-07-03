@@ -1,5 +1,5 @@
 from django.http import HttpResponseForbidden
-from django.conf.urls.defaults import patterns, include, url
+from django.conf.urls import patterns, include, url
 from django.contrib.auth.decorators import login_required
 from django.template import Context
 from django.views.generic import View
@@ -12,6 +12,7 @@ class Subview(TemplateResponseMixin, View):
     template_name = None
     task_name = None
     sub_url = None
+
     def enqueue(self, request, *args, **kwargs):
         taskid = dispatcher.dispatch(request.session, self.task_name, *args, **kwargs)
         # If the taskid is None, then the task result is still cached and we
@@ -35,8 +36,10 @@ class Subview(TemplateResponseMixin, View):
             ''' % (taskid, taskid, task_url)
 
         return mark_safe(content)
+
     def build_context(self, request, params):
         raise NotImplemented()
+
     def get(self, request, taskid):
         result = request.session.get(taskid)
         if not result:
@@ -44,6 +47,7 @@ class Subview(TemplateResponseMixin, View):
         result['task'].get()
         context = self.build_context(request, result['params'])
         return self.render_to_response(context)
+
     def render(self, request, context):
         resp = self.response_class(request,
                 self.template_name,
