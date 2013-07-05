@@ -87,8 +87,9 @@ class Command(BaseCommand):
             with transaction.atomic():
                 start_task('Deleting API fetched data')
                 for table_name in CAPSULER_API_DATA_TABLES:
-                    sql = 'DELETE FROM %s' % table_name
-                    cursor.execute(sql)
+                    if table_name in non_sde_tables:
+                        sql = 'DELETE FROM %s' % table_name
+                        cursor.execute(sql)
                 end_task()
                 start_task('Dropping SDE tables')
                 self.drop_tables(sde_table_names, cursor)
