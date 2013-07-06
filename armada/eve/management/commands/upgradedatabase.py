@@ -9,6 +9,7 @@ from armada.settings import DATABASES
 from armada.eve.management.commands import start_task, end_task, fail_task
 
 INITIAL_SQLS = ('data/eve_typeattributes_view.sql',
+        'data/eve_sde_table.sql',
         'data/eve_invtypes_view.sql')
 
 CAPSULER_API_DATA_TABLES = ('capsuler_userpilotproperty',
@@ -87,9 +88,10 @@ class Command(BaseCommand):
             with transaction.atomic():
                 start_task('Deleting API fetched data')
                 for table_name in CAPSULER_API_DATA_TABLES:
-                    if table_name in non_sde_tables:
-                        sql = 'DELETE FROM %s' % table_name
-                        cursor.execute(sql)
+                    if not table_name in non_sde_tables:
+                        continue
+                    sql = 'DELETE FROM %s' % table_name
+                    cursor.execute(sql)
                 end_task()
                 start_task('Dropping SDE tables')
                 self.drop_tables(sde_table_names, cursor)
@@ -151,7 +153,7 @@ class Command(BaseCommand):
     def update_sde_table(self, sde_table_names, dumpfile, cursor):
         cursor.execute('select max(batch) from eve_sde_table')
         batch = cursor.fetchone()
-        if len(batch) == 0:
+        if len(batch) == 0 or batch[0] == None:
             batch = 0
         else:
             batch = int(batch[0]) + 1
@@ -213,7 +215,11 @@ class Command(BaseCommand):
         log = NamedTemporaryFile(prefix='sde_import_', suffix='.log',
                 delete=False)
         with log:
-            opcode = call(['psql -f %s %s' % (dumpfile,
+            if len(DATABASES[dbalias]['HOST']) > 0:
+                host = '-h %s' % DATABASES[dbalias]['HOST']
+            else:
+                host = ''
+            opcode = call(['psql %s -f %s %s' % (host, dumpfile,
                 DATABASES[dbalias]['NAME']),],
                     stdout=log,
                     stderr=log,
