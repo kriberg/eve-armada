@@ -204,6 +204,15 @@ def fetch_alliance_list():
     dissolved.delete()
     print 'Alliance list processed. %d active alliances, %d alliances dissolved.' % (active.count(), removed)
 
+@task(name='tasks.fetch_alliance_corporation_members', expires=3600)
+def fetch_alliance_corporation_members():
+    alliances = Alliance.objects.all()
+    corporations = 0
+    print 'Fetching member corporations of %d alliances' % alliances.count()
+    for alliance in alliances:
+        corporations += alliance.members.count()
+    print 'Fetched %d member corporations for %d alliances' % (corporations, alliances.count())
+
 @task(name='tasks.fetch_conquerable_outposts', expires=3600)
 def fetch_conquerable_outposts():
     result = public.get_conquerable_station_list()

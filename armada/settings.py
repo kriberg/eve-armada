@@ -203,9 +203,13 @@ CELERYBEAT_SCHEDULE = {
             'task': 'tasks.fetch_alliance_list',
             'schedule': crontab(hour=13, minute=0),
             },
+        'alliance_corporation_members': {
+            'task': 'tasks.fetch_alliance_corporation_members',
+            'schedule': crontab(hour=14, minute=5),
+            },
         'conquerable_stations': {
             'task': 'tasks.fetch_conquerable_outposts',
-            'schedule': crontab(hour=13, minute=0),
+            'schedule': crontab(hour=14, minute=0),
             },
         'character_sheets': {
             'task': 'tasks.periodic_fetch_character_sheets',
