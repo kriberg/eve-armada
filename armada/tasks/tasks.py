@@ -230,5 +230,7 @@ def fetch_conquerable_outposts():
 @task(name='tasks.periodic_fetch_character_sheets', expires=3600)
 def periodic_fetch_character_sheets(ignore_results=True):
     capsulers = Capsuler.objects.all()
+    if len(capsulers) == 0:
+        return
     print 'Processing %d capsulers' % capsulers.count()
     results = group(fetch_character_sheet(c.pk) for c in capsulers).apply_async()
