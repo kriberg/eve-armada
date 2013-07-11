@@ -34,7 +34,7 @@ def skill_in_training(pilot):
     s = pilot.get_skill_in_training()
 
     if not s.skillInTraining:
-        return '<span class="label label-important">No skill in training!</span>'
+        return '<span class="label">No skill in training!</span>'
     else:
         id = 'skill-%d' % pilot.pk
         skill = InvType.objects.get(pk=s.trainingTypeID)
