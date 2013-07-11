@@ -34,7 +34,7 @@ class PilotListSubview(Subview):
     task_name = 'tasks.fetch_character_sheet'
     def build_context(self, request, params):
         capsuler = request.user.get_profile()
-        pilots = UserPilot.objects.filter(user=capsuler, activated=True)
+        pilots = UserPilot.objects.filter(user=capsuler, activated=True).order_by('date_of_birth')
         return {'pilots': pilots}
 
 class ArmadaView(TemplateResponseMixin, View):

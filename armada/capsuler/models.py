@@ -40,7 +40,7 @@ class Capsuler(models.Model):
     def get_active_pilots(self):
         return UserPilot.objects.filter(user=self,
                 apikey__in=self.get_api_keys(),
-                activated=True).order_by('public_info__name')
+                activated=True).order_by('date_of_birth')
 
     def get_active_corporations(self):
         pilots = self.get_active_pilots()
