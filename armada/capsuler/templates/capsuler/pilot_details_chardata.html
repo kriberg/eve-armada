@@ -22,6 +22,8 @@
                         <dd>{{ pilot.get_skill_count }} known skills, {{ pilot.get_skill_at_l5_count }} at level V</dd>
                         <dt>Using API key</dt>
                         <dd>{{ pilot.apikey.name }} (keyID: {{ pilot.apikey.keyid }})</dd>
+                        <dt>Currently training</dt>
+                        <dd>{% skill_in_training pilot %}</dd>
                     </dl>
                     <dl class="dl-horizontal span3">
                         <dt>Charisma</dt>
@@ -39,10 +41,10 @@
                 <div id="profile_skills" class="row">
                     <h2>Skills</h2>
                     <div class="" id="skills-accordion">
-                        {% for group_name, group in pilot.get_skills_by_group.items %}
+                        {% for group_name, group in pilot.get_skills_by_group %}
                         <div class="accordion-group">
                             <div class="accordion-heading">
-                                <a class="accordion-toggle" data-toggle="collapse" href="#collapse-{{ group.name|slugify }}">{{ group.name }} ({{ group.count }} skills known, {{ group.skillpoints }} skill points)</a>
+                                <a class="accordion-toggle" data-toggle="collapse" href="#collapse-{{ group.name|slugify }}">{{ group.name }} ({{ group.count }} skills known, {{ group.skillpoints|intcomma }} skill points)</a>
                             </div>
                             <div id="collapse-{{ group.name|slugify }}" class="accordion-body collapse">
                                 <div class="accordion-inner">

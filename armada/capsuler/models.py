@@ -259,27 +259,34 @@ class UserPilot(models.Model):
             return UserPilotProperty.objects.get(pilot=self, key=key).value
         except UserPilotProperty.DoesNotExist:
             return None
+
     def get_skills_by_group(self):
-        groups = {}
-        group_names = set([skill.skill.marketgroup.marketgroupname for skill in UserPilotSkill.objects.filter(pilot=self).order_by('skill__marketgroup__marketgroupname')])
+        groups = []
+        group_names = set([skill.skill.marketgroup.marketgroupname for skill in UserPilotSkill.objects.filter(pilot=self).order_by('skill__group__groupname')])
         for name in group_names:
             group_skills = UserPilotSkill.objects.filter(pilot=self, skill__marketgroup__marketgroupname=name).order_by('skill__typename')
-            groups[name] = {'name': name,
+            groups.append((name, {'name': name,
                     'skills': group_skills,
                     'count': group_skills.count(),
-                    'skillpoints': group_skills.aggregate(Sum('points'))['points__sum']}
+                    'skillpoints': group_skills.aggregate(Sum('points'))['points__sum']}))
+        groups.sort(key=lambda x: x[0])
         return groups
+
     def get_skill_points(self):
         try:
             return UserPilotSkill.objects.filter(pilot=self).aggregate(Sum('points'))['points__sum']
         except:
             return 'N/A'
+
     def get_skill_count(self):
         return UserPilotSkill.objects.filter(pilot=self).count()
+
     def get_skills_in_group_count(self, group):
         UserPilotSkill.object.filter(pilot=self, skill__marketgroup__marketgroupname=group).count()
+
     def get_skill_at_l5_count(self):
         return UserPilotSkill.objects.filter(pilot=self, level=5).count()
+
     def corporation_change(self, old_corp, new_corp):
         # Whenever a pilot changes corporation, we have to drop
         # roles in armada. We'll be aggressive with removing rights
@@ -288,6 +295,11 @@ class UserPilot(models.Model):
         LogisticsTeamMember.objects.filter(pilot=self).delete()
 
         #TODO: some notification
+
+    def get_skill_in_training(self):
+        return private.get_skill_in_training(self.apikey.keyid,
+                self.apikey.verification_code,
+                self.pk)
 
     @models.permalink
     def get_absolute_url(self):

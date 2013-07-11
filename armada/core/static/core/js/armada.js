@@ -120,4 +120,31 @@ var delayed_load = function (taskid, url) {
     });
 }
 
-
+var tq_countdown = function (timestamp, id) {
+    var target_time = new Date(timestamp*1000);
+    var component = function (x, v) {
+        return Math.floor(x / v);
+    }
+    var element = $('#'+id);
+    var counter = function() {
+        current = new Date();
+        diff = (target_time-current)/1000;
+        var days    = component(diff, 24 * 60 * 60),
+            hours   = component(diff,      60 * 60) % 24,
+            minutes = component(diff,           60) % 60,
+            seconds = component(diff,            1) % 60;
+        var txt = '';
+        if(days > 0)
+            txt += days+'d ';
+        if(hours > 0)
+            txt += hours+'h ';
+        if(minutes > 0)
+            txt += minutes+'min ';
+        if(seconds > 0)
+            txt += seconds+'s';
+        element.text(''+days+'d '+hours+'h '+minutes+'min '+seconds+'s');
+        setTimeout(counter, 1000);
+    }
+    counter();
+    setTimeout(counter, 1000);
+}
