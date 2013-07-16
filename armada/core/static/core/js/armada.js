@@ -142,7 +142,7 @@ var tq_countdown = function (timestamp, id) {
             txt += minutes+'min ';
         if(seconds > 0)
             txt += seconds+'s';
-        element.text(''+days+'d '+hours+'h '+minutes+'min '+seconds+'s');
+        element.text(txt);
         setTimeout(counter, 1000);
     }
     counter();

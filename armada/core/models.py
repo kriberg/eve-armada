@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib import admin
 from armada.eve.ccpmodels import *
 
 class EveCentralOrderManager(models.Manager):
@@ -103,3 +104,14 @@ class ItemSystemFloatingPrice(models.Model):
                 'sell_median': self.sell_median,
                 'sell_percentile': self.sell_percentile,
                 'timestamp': self.timestamp}
+
+class NewsItem(models.Model):
+    posted = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    title = models.CharField(max_length=100)
+    content = models.TextField()
+
+    def __unicode__(self):
+        return '%s (%s)' % (self.title, self.posted)
+
+admin.site.register(NewsItem)

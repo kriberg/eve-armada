@@ -43,6 +43,7 @@ class ArmadaView(TemplateResponseMixin, View):
     def get(self, request):
         minerals = InvType.objects.filter(group=InvGroup.objects.get(groupname='Mineral')).order_by('pk').exclude(typename='Chalcopyrite')
         mineral_table = MineralTable(minerals)
+        newsitems = NewsItem.objects.all().order_by('-posted')[:5]
         if request.user.is_authenticated():
             pilot_list = PilotListSubview().enqueue(request, (request.user.pk,), expires=60)
             num_keys = UserAPIKey.objects.filter(user=request.user.get_profile()).count()
@@ -58,6 +59,11 @@ class ArmadaView(TemplateResponseMixin, View):
             'pilot_list': pilot_list,
             'num_keys': num_keys,
             'num_pilots': num_pilots,
+            'newsitems': newsitems,
+            'punch': ('Your one-stop shop for all your corp needs',
+                'Easier than =importxml',
+                'Making sure you bridge instead of jump',
+                'The only trustworthy jita scam')
             })
 
 

@@ -6,41 +6,73 @@
 <div class="container">
     <div class="row">
         <div class="page-header">
-            <h1>Welcome to EVE Armada</h1>
-            <em>Your one-stop shop for all your corp needs</em>
+            <h1>Welcome to Armada</h1>
+            <em>{{ punch|random }}</em>
         </div>
     </div>
     <div class="row">
-        <div class="span8">
-            {% if request.user.is_authenticated %}
+        <div class="span7">
+            {% if not request.user.is_authenticated %}
+            <div class="hero-unit">
+                <h1>New to the Armada?</h1>
+                <p>
+                    Take a look at the features and see if there's anything you like.
+                    It's free to join and should have something for everyone.
+                </p>
+                    <a href="/about/" class="btn btn-primary btn-large">Check it out</a>
+                    <div class="pull-right">
+                        
+                    <a href="/accounts/register/" class="btn btn-large">Register</a>            
+                    <a href="/accounts/login/" class="btn btn-large">Log in</a>            
+                    </div>
+            </div>
+            {% else %}
             {% if not num_keys %}
-            To activate your pilots, you need to add their API keys. You
-            can do that in the account menu available by pressing your
-            account name in the upper right corner.
+            <h4>Get up and running!</h4>
+            <p class="well">
+                To activate your pilots, you need to add their API keys. You
+                can do that in the account menu available by pressing your
+                account name in the upper right corner.
+            </p>
             {% endif%}
             {% if not num_pilots and num_keys %}
-            You have no pilots activated. You can activate from the account
-            menu available by pressing your account name in the upper right
-            corner.
+            <h4>Get up and running!</h4>
+            <p class="well">
+                You have no pilots activated. You can activate from the account
+                menu available by pressing your account name in the upper right
+                corner.
+            </p>
             {% endif %}
             {% endif %}
-            <blockquote>
-                <p>OMG!RI just sperged all over myself when I found EVE Armada!</p>
-                <small>Fake corp CEO</small>
-            </blockquote>
-            <blockquote>
-                <p>Oh, a buffet... too bad I didn't bring my wallet...</p>
-                <small>Zoidberg</small>
-            </blockquote>
-            {% if not request.user.is_authenticated %}
-            <a href="/accounts/register/" class="btn">Register new user</a>            
-            <a href="/accounts/login/" class="btn">Log in</a>            
+            {% if newsitems %}
+            <h4>News</h4>
+            <div class="accordian" id="newsitems">
+                {% for item in newsitems %}
+                <div class="accordion-group">
+                    <div class="accordion-heading">
+                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#newsitems" href="#newsitem-{{ item.pk }}">
+                            {{ item.title }}
+                        </a>
+                    </div>
+                    <div id="newsitem-{{ item.pk }}" class="accordion-body collapse">
+                        <div class="accordion-inner">
+                            <p>
+                                {{ item.content|safe }}
+                            </p>
+                            <span class="muted">
+                                Posted {{ item.posted }}.
+                            </span>
+                        </div>
+                    </div>
+                </div> 
+            {% endfor %}
+            </div>
             {% endif %}
         </div>
-        <div class="span4">
+        <div class="offset1 span4">
             {{ pilot_list }}
             <div class="row">
-                <h3>Jita mineral index</h3>
+                <h4>Jita mineral index</h4>
                 <div class="span2">
                     {% csrf_token %}
                     {% render_table mineral_table %}
