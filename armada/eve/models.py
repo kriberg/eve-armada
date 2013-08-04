@@ -4,7 +4,6 @@ from traceback import format_exc
 from django.db import models
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
-from django.template.defaultfilters import slugify
 
 from armada.settings import STATIC_URL
 from armada.eve.ccpmodels import *

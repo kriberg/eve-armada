@@ -13,7 +13,8 @@ from armada.eve.models import Corporation, \
 from armada.eve.ccpmodels import InvType, \
         CrtCertificate, \
         DgmTypeattribute, \
-        InvFlag
+        InvFlag, \
+        StaStation
 from armada.lib.api import private
 from armada.lib.evemodels import get_location_name
 
@@ -293,6 +294,8 @@ class UserPilot(models.Model):
 
         # Removing logi access
         LogisticsTeamMember.objects.filter(pilot=self).delete()
+        self.corporation = new_corp
+        self.save()
 
         #TODO: some notification
 
@@ -482,6 +485,8 @@ class AssetManager(models.Manager):
             aobj.singleton = a.singleton
             if parent:
                 aobj.parent=parent
+            if hasattr(a, 'rawQuantity'):
+                aobj.raw_quantity = a.rawQuantity
             try:
                 aobj.itemtype = InvType.objects.get(pk=a.typeID)
             except:
@@ -502,6 +507,26 @@ class AssetManager(models.Manager):
     def delete_corporation_assets(self, corporation, apikey):
         self.filter(corporation=corporation, key=apikey).delete()
 
+    def get_asset_tree(self, *args, **kwargs):
+        assets = self.filter(*args, **kwargs)
+        locations = assets.order_by('locationid').distinct('locationid')
+
+        tree = []
+
+        for location in locations:
+            branch = location.as_location()
+            branch ["children"] = self.get_location_asset_tree(location.locationid, *args, **kwargs)
+            tree.append(branch)
+        return tree
+
+    def get_location_asset_tree(self, locationid, *args, **kwargs):
+        assets = self.filter(*args, **kwargs)
+        return [c.to_dict() for c in assets.filter(parent=None, locationid=locationid).order_by('itemtype__typename')]
+
+    def search_tree(self, *args, **kwargs):
+        assets = self.filter(*args, **kwargs)
+
+
 
 class Asset(models.Model):
     assetid = models.BigIntegerField()
@@ -514,12 +539,66 @@ class Asset(models.Model):
     pilot = models.ForeignKey(UserPilot, null=True)
     corporation = models.ForeignKey(UserCorporation, null=True)
     key = models.ForeignKey(UserAPIKey)
+    raw_quantity = models.IntegerField(null=True)
 
     objects = AssetManager()
 
     @property
     def location(self):
         return get_location_name(self.locationid)
+
+    def get_location_type(self):
+        try:
+            station = StaStation.objects.get(pk=self.locationid)
+            return station.stationtype_id
+        except:
+            return None
+
+    def to_dict(self, with_children=True):
+        d = {"title": self.itemtype.typename,
+                "typeid": self.itemtype.pk,
+                "q": self.quantity,
+                "rq": self.raw_quantity,
+                "key": self.pk,
+                }
+        if with_children:
+            children = self.children
+            if children.count() > 0:
+                d['children'] = [c.to_dict() for c in children]
+                d['folder'] = True
+        return d
+
+    def as_location(self):
+        return {"title": self.location,
+                "key": self.locationid,
+                "folder": True,
+                "typeid": self.get_location_type()}
+
+    def as_branch(self, child=None):
+        if child:
+            d = self.to_dict(children=False)
+            d["children"] = [child,]
+        else:
+            d = self.to_dict(children=True)
+            d['highlight'] = True
+
+        if self.parent:
+            return self.parent.as_branch(child=d)
+        else:
+            top = d.as_location()
+            top['children'] = d
+            top['lazy'] = False
+            return top
+
+    @property
+    def children(self):
+        return Asset.objects.filter(parent=self.pk,
+                key=self.key,
+                pilot=self.pilot,
+                locationid=self.locationid).order_by('itemtype__typename')
+
+    def __unicode__(self):
+        return '%s @ %s' % (self.itemtype, self.location)
 
 
 def create_capsuler_profile(sender, instance, created, **kwargs):

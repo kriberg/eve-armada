@@ -28,14 +28,6 @@ class MineralTable(tables.Table):
     class Meta:
         attrs = {'class': 'table table-condensed table-bordered table-striped'}
         orderable = False
-class PilotListSubview(Subview):
-    template_name = 'core/index_pilot_list.html'
-    sub_url = '/core/tasks/pilotlist/'
-    task_name = 'tasks.fetch_character_sheet'
-    def build_context(self, request, params):
-        capsuler = request.user.get_profile()
-        pilots = UserPilot.objects.filter(user=capsuler, activated=True).order_by('date_of_birth')
-        return {'pilots': pilots}
 
 class ArmadaView(TemplateResponseMixin, View):
     template_name = 'core/index.html'
@@ -45,18 +37,18 @@ class ArmadaView(TemplateResponseMixin, View):
         mineral_table = MineralTable(minerals)
         newsitems = NewsItem.objects.all().order_by('-posted')[:5]
         if request.user.is_authenticated():
-            pilot_list = PilotListSubview().enqueue(request, (request.user.pk,), expires=60)
+            pilots = request.user.get_profile().get_active_pilots()
             num_keys = UserAPIKey.objects.filter(user=request.user.get_profile()).count()
             num_pilots = UserPilot.objects.filter(user=request.user.get_profile(),
                     activated=True).count()
         else:
-            pilot_list = ''
+            pilots = []
             num_keys = None
             num_pilots = None
 
         return self.render_to_response({
             'mineral_table': mineral_table,
-            'pilot_list': pilot_list,
+            'pilots': pilots,
             'num_keys': num_keys,
             'num_pilots': num_pilots,
             'newsitems': newsitems,

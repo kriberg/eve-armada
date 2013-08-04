@@ -34,3 +34,6 @@ span.price-sell {
 #stockgroup_table input {
 }
 
+.align-right td {
+    text-align: right;
+}

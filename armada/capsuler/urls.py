@@ -6,9 +6,9 @@ from armada.capsuler.views import APIView, \
         PilotActivateView, \
         PilotDeactivateView, \
         PilotDetailsView, \
-        PilotDetailsSubview, \
         PilotAssetsView, \
-        AssetSubview
+        AssetsJSONView
+
 
 urlpatterns = patterns('',
         url(r'^api/$', login_required(APIView.as_view()), name='capsuler_api'),
@@ -16,8 +16,7 @@ urlpatterns = patterns('',
         url(r'^pilots/activate/(?P<characterid>\d+)$', login_required(PilotActivateView.as_view()), name='capsuler_activate_pilot'),
         url(r'^pilots/deactivate/(?P<characterid>\d+)$', login_required(PilotDeactivateView.as_view()), name='capsuler_deactivate_pilot'),
         url(r'^pilots/(?P<name>.+)/$', login_required(PilotDetailsView.as_view()), name='capsuler_pilot_details'),
+        url(r'^assets/(?P<pilot_id>\d+)/data/$', login_required(AssetsJSONView.as_view())),
         url(r'^assets/(?P<name>.+)/$', login_required(PilotAssetsView.as_view()), name='capsuler_pilot_assets'),
-        url(r'^tasks/assetlist/(?P<taskid>.+)/$', login_required(AssetSubview.as_view())),
-        url(r'^tasks/chardata/(?P<taskid>.+)/$', login_required(PilotDetailsSubview.as_view())),
         )
 

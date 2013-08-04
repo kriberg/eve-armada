@@ -1,16 +1,55 @@
 {% extends 'core/nav.html' %}
+{% block css %}
+        <link rel="stylesheet" href="/static/core/css/fancytree/ui.fancytree.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="/static/core/css/fancytree/fancytree_customization.css" type="text/css" media="screen" />
+{% endblock %}
+{% block js %}
+        <script src="/static/core/js/jquery-ui-1.10.3/jquery-ui-1.10.3.custom.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="/static/core/js/fancytree-2.0.0pre/jquery.fancytree-all.min.js" type="text/javascript" charset="utf-8"></script>
+{% endblock %}
 {% block content %}
 <div class="container">
     <div class="row">
         <div class="page-header">
-            <h1>{{ pilot.public_info.name }}'s assets</h1>
+            <h1>{{ pilot }}'s assets</h1>
         </div>
     </div>
     <div class="row">
         <div class="span12">
-            {{ assetlist }}
+            <p class="form-search">
+                <input type="text" class="input-xlarge search-query" name="search" placeholder="Search for item...">
+                <button id="reset" class="btn"  disabled="true">Reset</button>
+                <input id="hide" type="checkbox">Hide other items</input>
+            </p>
+            <p>
+                <button id="expand" class="btn">Expand all</button>
+                <button id="collapse" class="btn">Collapse all</button>
+                <span id="matches" style="margin-left: 2em;"></span>
+            </p>
+            <table id="assets" data-source="ajax" class="table table-condensed table-bordered table-striped">
+                <colgroup>
+                    <col width="*"></col>
+                    <col width="40px" class="number"></col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+                
+            </table>
         </div>
     </div>
 </div>
+<script type="text/javascript">
+    init_asset_tree('/capsuler/assets/{{ pilot.pk }}/data/', '#assets');
+</script>
 {% endblock %}
 

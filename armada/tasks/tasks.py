@@ -7,7 +7,7 @@ from datetime import datetime
 from traceback import format_exc
 
 from celery.task import task
-from celery import group
+from celery.execute import send_task
 #
 # Tasks
 #
@@ -19,78 +19,58 @@ TASK_TIMERS = {'tasks.fetch_character_sheet': 300,
         }
 
 @task(name='tasks.fetch_character_sheet', expires=600)
-def fetch_character_sheet(capsuler_id):
+def fetch_character_sheet(pilot_id):
+    pilot = UserPilot.objects.get(pk=pilot_id, activated=True)
     try:
-        capsuler = Capsuler.objects.get(pk=capsuler_id)
+        cache = UserAPIKeyCache.objects.get(apikey=pilot.apikey,
+                pilot=pilot,
+                function='char.charactersheet')
+        if cache.cache_time > datetime.now():
+            # The character sheet has been cached so it's been parsed recently
+            # Consider the data up to date.
+            return
+    except UserAPIKeyCache.DoesNotExist:
+        cache = UserAPIKeyCache(apikey=pilot.apikey,
+                pilot=pilot,
+                function='char.charactersheet')
+
+    try:
+        apidata = private.get_character_sheet(pilot.apikey.keyid,
+                pilot.apikey.verification_code,
+                pilot.id)
+    except Exception, ex:
+        #TODO: log this
+        print format_exc(ex)
+        raise Exception('Could not retrieve character sheet')
+
+    try:
+        cache.cache_time = datetime.fromtimestamp(apidata._meta.cachedUntil)
     except:
-        return
-    pilots = capsuler.get_active_pilots()
-    count = pilots.count()
-    for pilot in pilots:
-        fetch_character_sheet.update_state(state='PROGRESS',
-                meta={'pilot': pilot.public_info.name, 'total': count, 'step': 'Fetching from API',
-                    'state': 'PROGRESS'})
-        try:
-            cache = UserAPIKeyCache.objects.get(apikey=pilot.apikey,
-                    pilot=pilot,
-                    function='char.charactersheet')
-            if cache.cache_time > datetime.now():
-                # The character sheet has been cached so it's been parsed recently
-                # Consider the data up to date.
-                return
-        except UserAPIKeyCache.DoesNotExist:
-            cache = UserAPIKeyCache(apikey=pilot.apikey,
-                    pilot=pilot,
-                    function='char.charactersheet')
+        cache.cache_time = datetime.now()
+    cache.save()
 
-        try:
-            apidata = private.get_character_sheet(pilot.apikey.keyid,
-                    pilot.apikey.verification_code,
-                    pilot.id)
-        except Exception, ex:
-            #TODO: log this
-            print format_exc(ex)
-            raise Exception('Could not retrieve character sheet')
+    try:
+        ucorp = UserCorporation.objects.get(pk=apidata.corporationID)
+    except UserCorporation.DoesNotExist:
+        ucorp = UserCorporation(id=apidata.corporationID,
+                public_info=Corporation.objects.get_corporation(apidata.corporationID))
+        ucorp.save()
+    if ucorp != pilot.corporation:
+        pilot.corporation_change(pilot.corporation, ucorp)
 
-        try:
-            cache.cache_time = datetime.fromtimestamp(apidata._meta.cachedUntil)
-        except:
-            cache.cache_time = datetime.now()
-        cache.save()
+    pilot.public_info = Character.objects.get_character(apidata.characterID)
 
-        try:
-            ucorp = UserCorporation.objects.get(pk=apidata.corporationID)
-        except UserCorporation.DoesNotExist:
-            ucorp = UserCorporation(id=apidata.corporationID,
-                    public_info=Corporation.objects.get_corporation(apidata.corporationID))
-            ucorp.save()
-        if ucorp != pilot.corporation:
-            pilot.corporation_change(pilot.corporation, ucorp)
-            pilot.corporation = ucorp
+    pilot.date_of_birth = datetime.fromtimestamp(apidata.DoB)
 
-        pilot.public_info = Character.objects.get_character(apidata.characterID)
-
-        pilot.date_of_birth = datetime.fromtimestamp(apidata.DoB)
-        fetch_character_sheet.update_state(state='PROGRESS',
-                meta={'pilot': pilot.public_info.name, 'total': count, 'step': 'Parsing character sheet',
-                    'state': 'PROGRESS'})
-
-        UserPilotProperty.objects.update_pilot_from_api(pilot, apidata)
-        UserPilotAugmentor.objects.update_pilot_from_api(pilot, apidata)
-        UserPilotSkill.objects.update_pilot_from_api(pilot, apidata)
-        UserPilotCertificate.objects.update_pilot_from_api(pilot, apidata)
-        pilot.save()
-    fetch_character_sheet.update_state(state='SUCCESS',
-            meta={'total': count, 'state': 'SUCCESS', 'step': 'Completed'})
+    UserPilotProperty.objects.update_pilot_from_api(pilot, apidata)
+    UserPilotAugmentor.objects.update_pilot_from_api(pilot, apidata)
+    UserPilotSkill.objects.update_pilot_from_api(pilot, apidata)
+    UserPilotCertificate.objects.update_pilot_from_api(pilot, apidata)
+    pilot.save()
 
 @task(name='tasks.fetch_character_assets', expires=600)
 def fetch_character_assets(pilot_id):
-    try:
-        pilot = UserPilot.objects.get(pk=pilot_id, activated=True)
-    except:
-        return
-#   fetch_character_assets.update_state(state='PROGRESS',
-#           meta={'pilot': pilot.public_info.name, 'step': 'Fetching from API', 'state': 'PROGRESS'})
+    pilot = UserPilot.objects.get(pk=pilot_id, activated=True)
     try:
         cache = UserAPIKeyCache.objects.get(apikey=pilot.apikey,
                 pilot=pilot,
@@ -115,13 +95,9 @@ def fetch_character_assets(pilot_id):
     except:
         cache.cache_time = datetime.now()
     cache.save()
-#   fetch_character_assets.update_state(state='PROGRESS',
-#           meta={'pilot': pilot.public_info.name, 'step': 'Parsing asset list', 'state': 'PROGRESS'})
 
     Asset.objects.delete_pilot_assets(pilot, pilot.apikey)
     Asset.objects.update_from_api(apidata.assets, pilot.apikey, pilot=pilot)
-#   fetch_character_assets.update_state(state='SUCCESS',
-#           meta={'pilot': pilot.public_info.name, 'step': 'Completed', 'state': 'SUCCESS'})
 
 @task(name='tasks.fetch_corporate_assets', expires=600)
 def fetch_corporate_assets(apikey_id, user_corp_id):
@@ -132,8 +108,6 @@ def fetch_corporate_assets(apikey_id, user_corp_id):
         #TODO: log
         print 'not actived', apikey, user_corporation
         return
-#   fetch_character_assets.update_state(state='PROGRESS',
-#           meta={'corporation': user_corporation.public_info.name, 'step': 'Fetching from API', 'state': 'PROGRESS'})
     try:
         cache = UserAPIKeyCache.objects.get(apikey=apikey,
                 function='corp.assetlist')
@@ -155,13 +129,9 @@ def fetch_corporate_assets(apikey_id, user_corp_id):
     except:
         cache.cache_time = datetime.now()
     cache.save()
-#   fetch_character_assets.update_state(state='PROGRESS',
-#           meta={'corporation': user_corporation.public_info.name, 'step': 'Parsing asset list', 'state': 'PROGRESS'})
 
     Asset.objects.delete_corporation_assets(user_corporation, apikey)
     Asset.objects.update_from_api(apidata.assets, apikey, corporation=user_corporation)
-#   fetch_character_assets.update_state(state='SUCCESS',
-#           meta={'corporation': user_corporation.public_info.name, 'step': 'Completed', 'state': 'SUCCESS'})
 
 @task(name='tasks.fetch_alliance_list', expires=3600)
 def fetch_alliance_list():
@@ -238,8 +208,5 @@ def fetch_conquerable_outposts():
 
 @task(name='tasks.periodic_fetch_character_sheets', expires=3600)
 def periodic_fetch_character_sheets(ignore_results=True):
-    capsulers = Capsuler.objects.all()
-    if not capsulers.count() > 0:
-        return
-    print 'Processing %d capsulers' % capsulers.count()
-    results = group(fetch_character_sheet(c.pk) for c in capsulers).apply_async()
+    for pilot in UserPilot.objects.filter(activated=True):
+        send_task('tasks.fetch_character_sheet', (pilot.pk,))

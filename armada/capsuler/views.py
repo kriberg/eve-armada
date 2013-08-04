@@ -1,8 +1,13 @@
-from django.http import HttpResponse, HttpResponseRedirect, HttpResponseForbidden, Http404
+from django.http import HttpResponse, \
+        HttpResponseRedirect, \
+        HttpResponseForbidden, \
+        Http404, \
+        StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.generic import View
 from django.views.generic.base import TemplateResponseMixin
 from django.forms.models import modelformset_factory
+from django.template.defaultfilters import slugify
 
 from celery.execute import send_task
 from datetime import datetime
@@ -107,15 +112,7 @@ class PilotDeactivateView(View):
 
         return HttpResponseRedirect('/capsuler/pilots/')
 
-class PilotDetailsSubview(Subview):
-    template_name = 'capsuler/pilot_details_chardata.html'
-    task_name = 'tasks.fetch_character_sheet'
-    sub_url = '/capsuler/tasks/chardata/'
-    def build_context(self, request, params):
-        pilot = get_object_or_404(UserPilot,
-                public_info__name=params['pilotname'],
-                user=request.user.get_profile())
-        return {'pilot': pilot}
+
 class PilotDetailsView(TemplateResponseMixin, View):
     template_name = 'capsuler/pilot_details.html'
     def get(self, request, name):
@@ -123,14 +120,10 @@ class PilotDetailsView(TemplateResponseMixin, View):
                 public_info__name=name,
                 user=request.user.get_profile())
 
-        pilot_details = PilotDetailsSubview().enqueue(request,
-                (pilot.user.pk,),
-                pilotname=name,
-                expires=60)
         return self.render_to_response({
             'pilot': pilot,
-            'pilot_details': pilot_details,
             })
+
 
 class AssetTable(tables.Table):
     itemtype = ItemColumn(verbose_name='Item')
@@ -145,20 +138,30 @@ class AssetTable(tables.Table):
         orderable = True
 
 
-class AssetSubview(Subview):
-    template_name = 'capsuler/pilot_assets_assetlist.html'
-    task_name = 'tasks.fetch_character_assets'
-    sub_url = '/capsuler/tasks/assetlist/'
-
-    def build_context(self, request, params):
+class AssetsJSONView(View):
+    def get(self, request, pilot_id):
         pilot = get_object_or_404(UserPilot,
-                public_info__name=params['pilotname'],
+                pk=pilot_id,
                 user=request.user.get_profile(),
                 activated=True)
-        assets = Asset.objects.filter(pilot=pilot, key=pilot.apikey).order_by('locationid', 'itemtype__typename')
-        assets_table = AssetTable(assets)
-        tables.RequestConfig(request, paginate={'per_page': 100}).configure(assets_table)
-        return {'assets_table': assets_table}
+
+        requested_node = request.GET.get('node', None)
+        if not requested_node:
+            #assets = Asset.objects.filter(pilot=pilot, key=pilot.apikey,
+            #    parent=None).order_by('locationid').distinct('locationid')
+            #unique_locations = []
+            #for a in assets:
+            #    unique_locations.append(a.as_location())
+            assets = Asset.objects.get_asset_tree(pilot=pilot,
+                    key=pilot.apikey)
+            return HttpResponse(json.dumps(assets),
+                    content_type='application/json')
+        else:
+            tree = Asset.objects.get_location_asset_tree(requested_node,
+                    pilot=pilot,
+                    key=pilot.apikey)
+            return HttpResponse(json.dumps(tree),
+                    content_type='application/json')
 
 
 class PilotAssetsView(TemplateResponseMixin, View):
@@ -169,12 +172,7 @@ class PilotAssetsView(TemplateResponseMixin, View):
                 public_info__name=name,
                 user=request.user.get_profile(),
                 activated=True)
-        assetlist = AssetSubview().enqueue(request,
-                (pilot.pk,),
-                pilotname=name,
-                expires=60)
         return self.render_to_response({
             'pilot': pilot,
-            'assetlist': assetlist,
             })
 

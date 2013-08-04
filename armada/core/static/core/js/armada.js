@@ -148,3 +148,81 @@ var tq_countdown = function (timestamp, id) {
     counter();
     setTimeout(counter, 1000);
 }
+
+var init_asset_tree = function(json_url, element) {
+    console.log(json_url);
+    $.ui.fancytree.debugLevel = 1;
+    $(function() {
+        $(element).fancytree({
+            extensions: ["filter", "table"],
+            table: {
+                indentation: 20,
+                nodeColumnIdx: null
+            },
+            source: {
+                url: json_url
+            },
+            lazyload: function(e, data) {
+                data.result = $.ajax({
+                    url: json_url+'?node='+data.node.key,
+                    dataType: "json"
+                });
+            },
+            click: function(e, data) {
+                data.node.toggleExpanded();
+            },
+            rendercolumns: function(e, data) {
+                var node = data.node;
+                var span = node.span;
+                var item = node.data;
+                var $tdList = $(node.tr).find(">td");
+                var padding = 'margin-left: '+ 20*(node.getLevel()-1) +'px;'
+                var itemtitle = '<span class="fancytree-expander" style="'+padding+'"></span>';
+                itemtitle += '<img src="http://image.eveonline.com/Type/' + item.typeid + '_32.png" alt="">';
+                itemtitle += '<span class="fancytree-title" >'+ node.title + '</span>';
+                $tdList.eq(0).html(itemtitle);
+                $tdList.eq(1).text(item.q);
+            },
+            filter: {
+            }
+        });
+        var tree = $(element).fancytree("getTree");
+
+        $("input[name=search]").keyup(function(e) {
+            var match = $(this).val();
+            if(e && e.which === $.ui.keyCode.ESCAPE || $.trim(match) === ""){
+                $("button#reset").click();
+                return;
+            }
+            tree.options.filter.mode = $("input#hide").is(":checked") ? "hide" : "dimm";
+            var num_matches = tree.applyFilter(match);
+            $("button#reset").attr("disabled", false);
+            $("span#matches").text(num_matches + ' stack(s) found');
+        }).focus();
+
+        $("button#reset").click(function(e) {
+            $("input[name=search]").val("");
+            $("span#matches").text("");
+            tree.clearFilter();
+        }).attr("disabled", true);
+        
+        $("button#collapse").click(function(e) {
+            $(element).fancytree("getRootNode").visit(function(node) {
+                node.setExpanded(false);
+            });
+        });
+
+        $("button#expand").click(function(e) {
+            $(element).fancytree("getRootNode").visit(function(node) {
+                node.setExpanded(true);
+            });
+        });
+        $("input#hide").change(function(e){
+            tree.options.filter.mode = $(this).is(":checked") ? "hide" : "dimm";
+            tree.clearFilter();
+            $("input[name=search]").keyup();
+        });
+
+
+    });
+}

@@ -1,0 +1,12 @@
+.fancytree-container img {
+    height: 32px;
+    width: 32px;
+}
+
+.fancytree-container {
+    font-family: inherit;
+    font-size: inherit;
+    border: 1px solid #ddd;
+    outline: none;
+    -moz-outline-style: none;
+}
