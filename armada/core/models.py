@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from django.contrib import admin
 from armada.eve.ccpmodels import *
 
@@ -109,6 +110,7 @@ class NewsItem(models.Model):
     posted = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
     title = models.CharField(max_length=100)
+    writer = models.ForeignKey(User)
     content = models.TextField()
 
     def __unicode__(self):

@@ -53,6 +53,9 @@
                     <div class="accordion-heading">
                         <a class="accordion-toggle" data-toggle="collapse" data-parent="#newsitems" href="#newsitem-{{ item.pk }}">
                             {{ item.title }}
+                            <span class="muted pull-right">
+                                {{ item.posted }}.
+                            </span>
                         </a>
                     </div>
                     <div id="newsitem-{{ item.pk }}" class="accordion-body collapse">
@@ -61,7 +64,7 @@
                                 {{ item.content|safe }}
                             </p>
                             <span class="muted">
-                                Posted {{ item.posted }}.
+                                Posted by {{ item.writer }}.
                             </span>
                         </div>
                     </div>
@@ -107,5 +110,6 @@
 <script type="text/javascript">
     init_price_columns();
     init_isk_span();
+    $("div.accordion-body").first().collapse("show");
 </script>
 {% endblock %}
