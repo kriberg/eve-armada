@@ -21,6 +21,11 @@ from celery.execute import send_task
 from armada.tasks.tasks import *
 from armada.tasks.views import Subview
 
+PUNCHLINES = ('Your one-stop shop for all your corp needs',
+        'Easier than =importxml',
+        'Making sure you bridge instead of jump',
+        'The only trustworthy jita scam')
+
 class MineralTable(tables.Table):
     typename = ItemColumn(verbose_name='Item')
     jitaprice = SystemItemPriceColumn(verbose_name='price')
@@ -52,10 +57,7 @@ class ArmadaView(TemplateResponseMixin, View):
             'num_keys': num_keys,
             'num_pilots': num_pilots,
             'newsitems': newsitems,
-            'punch': ('Your one-stop shop for all your corp needs',
-                'Easier than =importxml',
-                'Making sure you bridge instead of jump',
-                'The only trustworthy jita scam')
+            'punch': PUNCHLINES
             })
 
 
@@ -101,6 +103,12 @@ class SystemPriceView(TemplateResponseMixin, JSONView):
         for itemprice in itemprices:
             text[itemprice.item.pk] = (itemprice.buy_maximum, itemprice.sell_minimum)
         return self.render_to_response({'json': self.json_encoder.encode(text)})
+
+class AboutView(TemplateResponseMixin, View):
+    template_name = 'core/about.html'
+
+    def get(self, request):
+        return self.render_to_response({'punch': PUNCHLINES})
 
 def armada404(request):
     return render_to_response('core/404.html',

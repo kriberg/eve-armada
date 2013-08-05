@@ -1,5 +1,5 @@
 BeautifulSoup==3.2.1
-Django==1.6
+-e git://github.com/django/django.git@1.6b1#egg=Django
 -e hg+https://bitbucket.org/ubernostrum/django-registration#egg=django-registration
 celery==3.0.21
 -e git://github.com/af/djangbone.git#egg=djangbone-dev

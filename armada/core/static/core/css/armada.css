@@ -37,3 +37,7 @@ span.price-sell {
 .align-right td {
     text-align: right;
 }
+
+div#screenshots img {
+    padding-bottom: 20px;
+}
