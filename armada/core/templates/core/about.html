@@ -1,0 +1,60 @@
+{% extends 'core/nav.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="page-header">
+            <h1>Welcome to Armada</h1>
+            <em>{{ punch|random }}</em>
+        </div>
+    </div>
+    <div class="row">
+        <a href="https://github.com/kriberg/eve-armada"><img style="position: absolute; top:
+            40px; right: 0; border: 0;"
+            src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"
+            alt="Fork me on GitHub"></a>
+        <p class="offset3 span6 text-center">
+            Armada is a multi-tenant tool to manage your characters, corporations
+            and alliances. There's a bunch of API tools out there, so we try to focus
+            on that other functionality you'd wish you had, but nobody has made or released
+            to the public. Here's some random screenies of stuff that's already been made.
+        </p>
+        <div id="screenshots" class="offset3">
+                <a href="/static/core/img/about/chars.png"><img class="image-rounded" alt="chars" src="/static/core/img/about/thumb.chars.png" /></a>
+                <p>
+                    The usual hurf blurf character page.
+                </p>
+                <a href="/static/core/img/about/assets.png"><img class="image-rounded" alt="assets" src="/static/core/img/about/thumb.assets.png" /></a>
+                <p>
+                    A searchable view of your assets.
+                </p>
+                <a href="/static/core/img/about/stocker.png"><img class="image-rounded" alt="stocker" src="/static/core/img/about/thumb.stocker.png" /></a>
+                <p>
+                    Stocker lets you keep track of how many items you have in a
+                    corporation hangar at a station.  You can give other members
+                    access to view the specific stock groups you have set up,
+                    without giving them access to your corporation API keys or
+                    without the ability to view other assets. Nifty for keeping
+                    track of logistics.
+                </p>
+        </div>
+    </div>
+    <div class="row">
+        <hr />
+        <p class="text-center muted">
+            EVE Online and the EVE logo are the registered trademarks of CCP
+            hf. All rights are reserved worldwide. All other trademarks are the
+            property of their respective owners. EVE Online, the EVE logo, EVE
+            and all associated logos and designs are the intellectual property
+            of CCP hf. All artwork, screenshots, characters, vehicles,
+            storylines, world facts or other recognizable features of the
+            intellectual property relating to these trademarks are likewise the
+            intellectual property of CCP hf. CCP hf. has granted permission to
+            eve-armada.com to use EVE Online and all associated logos and
+            designs for promotional and information purposes on its website but
+            does not endorse, and is not in any way affiliated with,
+            eve-armada.com. CCP is in no way responsible for the content on or
+            functioning of this website, nor can it be liable for any damage
+            arising from the use of this website.
+        </p>
+    </div>
+{% endblock %}
